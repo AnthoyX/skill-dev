@@ -32,7 +32,7 @@
 ```
 
 - **`D-01`** 提交按钮 `close: false` + `submitSucc` 内手动 `closeDialog`；`submitFail` 不用写（默认保持弹层打开可重试，实测失败分支无需处理）
-  `来源:实战观察+V-1-D实测|状态:已实测|版本:6.13.0|后果:弹层秒关看不到 loading，接口失败无法重试`
+  `来源:实战观察+V-1-D实测(2026-08-31)|状态:已实测|版本:6.13.0|后果:弹层秒关看不到 loading，接口失败无法重试`
 - **`D-04`** 弹层提交按钮**不配 `loadingOn`**、不需要 Service 变量与 `setValue`——submit 按钮有内建 loading（实测 loadingOn 恒 false 照样转圈）
   `来源:V-1/V-1-D实测(2026-08-31)|状态:已实测|版本:6.13.0|后果:死配置，误导读者`
   例外：download 导出按钮**必须**配对 → §2（`D-08`）
@@ -42,7 +42,8 @@
   `来源:实战观察|状态:实战观察|版本:6.x|后果:接口不调用、submitSucc 不触发、loading 卡死`
 - **`D-07`** 确认弹层用 `actionType:"dialog"` 自定义弹框，不用 `confirmText`
   `来源:实战观察|状态:实战观察|版本:6.x|后果:原生框无法 loading、无法展示复杂提示`
-- 弹层默认关闭模式（close 缺省）下提交后自动刷新 CRUD：据官方文档（crud「增」章节），未实测
+- **`D-11`** 弹层默认关闭模式（close 缺省）下 form api 的 `reload`（值为 crud 的 `name`）生效，提交后自动刷新 CRUD；可用 `"reload": "none"` 显式关闭
+  `来源:官方文档(crud「增」章节)|状态:据官方文档,未实测|版本:6.x|后果:行为未经本地实测，注意与 D-05（close:false 下相反）的边界`
 
 ## §2 下载/导出（唯一正确写法）
 
@@ -73,7 +74,7 @@
 |------|------|------|
 | 事件动作（`onEvent.actions` 内） | `componentId` | 匹配组件 `id`；**此处** `target` 不生效 |
 | `{"type":"action","actionType":"reload"}` 按钮 | `target` | 值为组件 `name`，**官方支持的合法写法**，勿误判为错误 |
-| form api 配置 | `reload` | 值为组件 `name`；仅默认关闭模式有效（据官方文档）；`close:false` 下不生效（`D-05`） |
+| form api 配置 | `reload` | 值为组件 `name`；仅默认关闭模式有效（`D-11`，未实测）；`close:false` 下不生效（`D-05`） |
 
 - **`D-03`** 事件动作内 reload 必须用 `componentId`（`target` 失效），目标组件必须设 `id`
   `来源:实战观察|状态:实战观察|版本:6.x|后果:reload 不生效`
@@ -81,7 +82,7 @@
 
 ## §4 Service 包装层（仅无内建 loading 的按钮需要）
 
-- **`D-09`** loading 变量必须声明在**外层 Service 的 `data`**，`setValue` 的 componentId 指向 service（crud 内 setValue 的变量不传播到 headerToolbar 子组件，机制见 references/data-source.md §5 `A-01`）；弹层提交按钮不需要 Service → `D-04`
+- **`D-09`** loading 变量声明在**外层 Service 的 `data`**，`setValue` 的 componentId 指向 service（机制：crud 内 setValue 不向外传播 → references/data-source.md §5 `A-01`）；弹层提交按钮不需要 Service → `D-04`
   `来源:实战观察|状态:实战观察|版本:6.x|后果:loadingOn 读不到变量恒 false`
 
 ```json

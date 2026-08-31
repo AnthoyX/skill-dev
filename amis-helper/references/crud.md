@@ -1,7 +1,7 @@
 # CRUD 规范
 
 规则 ID 前缀 `C-xx`，元数据四要素：`来源|状态|版本|违反后果`。
-排障条目见 references/pitfalls.md（P-xx）；生成后自检见 references/self-check.md。
+排障条目见 references/pitfalls.md。
 
 ## §1 分页与骨架
 
@@ -91,17 +91,17 @@
 
 ## §7 filter 顶部搜索表单
 
-filter 字段自动进入 crud 数据域，api.data 用 `${字段名}` 引用；actions 放 Reset + Submit 按钮。完整写法见 examples/crud-base.json。
+filter 字段自动进入 crud 数据域，api.data 用 `${字段名}` 引用；actions 放 Reset + Submit 按钮。完整写法见 examples/crud-full.json。
 
 ## §8 loadDataOnce
 
 小数据量（全量字典/配置类列表）用 `"loadDataOnce": true`：首次请求拉全量，后续分页/排序在前端完成。弹层内嵌选择器常用 → examples/bulk-actions-picker.json（`D-10`）。
 
-## §9 刷新机制（权威定义在弹层域 D-03/D-05）
+## §9 刷新机制（权威定义在弹层域 D-03/D-05/D-11）
 
 | 场景 | 写法 | 规则 |
 |------|------|------|
 | 事件动作（onEvent.actions 内） | `{"actionType":"reload","componentId":"..."}` | `D-03` |
 | action 类型按钮 | `{"type":"action","actionType":"reload","target":"crudName"}`（官方合法写法） | `D-03` |
 | close:false 弹层提交 | submitSucc 显式 componentId reload（**唯一**写法） | `D-05` |
-| 弹层默认关闭模式（close 缺省） | form api 里加 `"reload": "目标crud的name"` | 据官方文档，未实测 |
+| 弹层默认关闭模式（close 缺省） | form api 里加 `"reload": "目标crud的name"`；`"reload":"none"` 可关闭 | `D-11` |

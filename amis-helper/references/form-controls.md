@@ -48,8 +48,10 @@
   `来源:实战观察|状态:实战观察|版本:6.x|后果:联想不触发`
 - **`F-04`** `sendOn` 写在 autoComplete 对象**内**（放 source 内失效）
   `来源:实战观察|状态:实战观察|版本:6.x|后果:联想不触发`
+- **`F-07`** 联想响应的 data **直接是数组**，不是 `{options:[...]}` 嵌套
+  `来源:实战观察|状态:实战观察|版本:6.x|后果:下拉为空`
 - `${term}` 是 amis 默认搜索词变量（GET 为 query 参数）；`overlayStyle.width` 控制下拉面板宽度
-- 排查链（联想不生效时按序）：请求未发出（sendOn/autoComplete 配置错）→ 404（路由未部署）→ 401（需登录）→ 显示 invalid label（`F-10`）→ 选中值不对（valueField 错）
+- 排查链（联想不生效时按序）：请求未发出（sendOn/autoComplete 配置错）→ 404（路由未部署）→ 401（需登录）→ 下拉项显示 invalid label（两类根因：① adapter 字符串转换不可用 → `F-10`；② 返回字段与 labelField 不匹配）→ 选中值不对（valueField 错）
 
 ## §4 编辑弹层展示字段
 
