@@ -51,6 +51,7 @@ disable: false
 | api / 接口 / 后端字段 / 响应结构 / 变量取值 | references/data-source.md |
 | 不生效 / 没反应 / 报错 / 排查 / 为什么 | references/pitfalls.md |
 | 需要整页骨架 | 本文 §4 examples 索引 |
+| 任何生成任务完成后 | references/self-check.md |
 
 命中即读，不得凭记忆作答。本 skill 规则多为反直觉坑点，凭常识推理必然出错。
 

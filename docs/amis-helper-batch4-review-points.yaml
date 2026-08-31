@@ -1,0 +1,55 @@
+# amis-helper v1.2 批次 4 —— 外部 AI 评审输入（自包含）
+date: 2026-08-31
+评审对象: examples/self-check.md 拟新建方案 + META.md 第 56 行小改 + SSOT 终检脚本设计（文件尚未创建，只评审方案）
+评审基准: docs/amis-helper-iteration-plan.md（§4.4 体量预算 / §5.2 批次 4 / §6.2 自检清单设计）
+
+前置事实:
+  已完成批次:
+    批次1: ID 体系冻结——32 条权威规则 = R-01(META.md) + C-01~C-08(crud.md) + D-01~D-11(dialog-actions.md) + F-01~F-10(form-controls.md) + A-01~A-02(data-source.md)，每条带「来源|状态|版本|违反后果」四要素
+    批次2: pitfalls.md 重编号 P-01~P-16 纯引用化（只写症状+错误写法+ID 指向）；SKILL.md 索引化（59 行）
+    批次3: 原 crud-full.json 拆 4 片段 + examples/INDEX.md（含宿主依赖/覆盖 ID/行数）
+  已知遗留（均已在 INDEX.md 注记，不进自检清单）:
+    - bulk-actions-picker 的 ajax 按钮 reload 属性属规则盲区（v2.0 补）
+    - D-08 button loading 视觉在 6.13.0 SDK 下待复核
+
+改动范围（硬约束）:
+  仅动: [examples/self-check.md（新建）, META.md（仅第 56 行）]
+  约束: [CRLF 行尾, 文档内 JSON 示例禁注释（R-01）, 只引用已冻结 32 条 + P-01~P-16 且不引用不存在文件, 只引规则 ID 不复述写法（SSOT）]
+
+决策点1_文件位置:
+  选择: examples/self-check.md
+  备选: references/self-check.md（迭代计划 §4.1 原写法）
+  理由: 批次 4 任务原文指定 examples/；META.md 措辞同步澄清「自检文档不属示例」
+  请评审: 位置是否合理，或应放 references/
+
+决策点2_分组切面（32 条全覆盖，P-xx 不进清单）:
+  通用必查: [R-01, A-02]
+  CRUD列表页: [C-01, C-02, C-03, C-04, C-05, C-06, C-07, C-08]
+  弹层提交: [D-01, D-04, D-05, D-06, D-07, D-03]
+  下载导出: [D-02, D-08, D-09]
+  表单控件: [F-01, F-02, F-03, F-04, F-05, F-06, F-07, F-08, F-09, F-10]
+  接口刷新联动: [A-01, D-11, C-02]
+  设计说明:
+    - 下载/导出从弹层域单列：与弹层 loading 要求相反（弹层禁 loadingOn / download 必配），是最易混点
+    - D-03（事件动作 reload 用 componentId，target 仅 action 按钮合法）、C-02（被刷新目标双设 id/name）允许跨组二次引用——非权威定义，不破 SSOT
+  请评审: 32 条归组是否得当、有无遗漏或应增删的检查点（对照 references/ 权威文件逐条核）
+
+决策点3_条目形态与行数:
+  形态: 「- [ ] 可勾选检查点（正向问句）→ `X-xx`」，不复述写法
+  行数: 目标 ~60 行；§4.4 未给此文件单列预算，按最接近的 reference 上限 120 行执行
+  请评审: 条目信息密度（检查点是否可独立判断，不读规则也能答是/否）
+
+决策点4_META.md 第 56 行修改:
+  改前: "- 参考文档：5 份；示例：6 个 .json + 1 个 examples/INDEX.md 索引（批次 3：原 crud-full.json 拆 4 片段 + 2 保留；self-check.md 批次 4 新增）"
+  改后: "- 参考文档：5 份；自检清单：examples/self-check.md（批次 4 新增，生成配置后的自检文档，不属示例）；示例：6 个 .json + 1 个 examples/INDEX.md 索引（批次 3：原 crud-full.json 拆 4 片段 + 2 保留）"
+  请评审: 措辞与归属语义是否清晰
+
+终检脚本设计（批次 4 交付物，临时脚本用完删除）:
+  脚本1_权威形态唯一性: R-01 用「### `R-01`」、C/D/F/A 用「**`X-xx`**」，在 skill 全文出现次数必须 =1（其余位置均为裸 `X-xx` 引用）
+  脚本2_连续性与悬空引用: 各域编号连续无跳号（C1-8 / D1-11 / F1-10 / A1-2 / P1-16 / R×1）；悬空引用 =0（examples 文件名存在、references/*.md §N 章节存在、META 计数 vs 实际核对）
+
+评审 AI 输出要求:
+  - 决策点 1~4 逐项给结论：通过 / 修改（必须给出具体改法）
+  - 核查 32 条分组覆盖完整性与遗漏检查点
+  - 核查终检脚本设计能否达成「权威唯一 + 无跳号 + 无悬空引用」的验收目标
+  - 只输出评审意见，不改任何文件
