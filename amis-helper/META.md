@@ -52,7 +52,7 @@
 ## 规则数量（批次 1 返工后）
 
 - 权威规则：32 条 = R×1 + C×8 + D×11 + F×10 + A×2（见各域文件）
-- 排障条目：16 条（`references/pitfalls.md`；P-01～P-16 新编号批次 2 落地，当前为 P1.x/P2.x 旧编号）
+- 排障条目：16 条（`references/pitfalls.md`；P-01～P-16 批次 2 已落地）
 - 参考文档：5 份；示例：3 个（examples/INDEX.md 批次 3 建立，self-check.md 批次 4 新增）
 
 ## 变更记录

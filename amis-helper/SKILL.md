@@ -6,25 +6,23 @@ amis-version: "6.x（规则实测基于 6.13.0）"
 allowed-tools: Read, Grep, Glob
 disable: false
 ---
-
 # amis-helper Skill
 
-生成 amis 配置时必须遵守本文件规则，深水区场景按需读取 references/。
+规则全文以 ID 权威定义为准（META.md + references/），本文件只做索引。适用边界：仅 JSON Schema 手写生成，不适用于 amis-editor 可视化 / amis 2.x / 移动端 H5，详见 META.md。
+## 1. 硬规则索引（违反任意一条=返工，权威写法见指向处）
 
-## 1. 生成前必查硬规则（违反任意一条=返工）
-
-| # | 规则 | 详情 |
-|---|------|------|
-| 1 | JSON 内禁止注释 | amis Schema 校验报错，注释只能写在配置外的文档里 |
-| 2 | crud 分页切换器：`perPageAvailable` 必须放 crud 顶层，不能放 footerToolbar 内组件里 | references/crud.md §1 |
-| 3 | 事件动作（`onEvent.actions`）中 reload 用 `componentId`（此处 `target` 不生效），目标组件必须设 `id`；`action` 类型按钮的 `target` 是官方合法写法，勿误判 | references/dialog-actions.md §3 |
-| 4 | 弹层提交按钮：`close: false` + `submitSucc` 中 `closeDialog`；**不要配 `loadingOn`**（submit 有内建 loading，配了是死配置），禁止用 `onEvent.submit` | references/dialog-actions.md §1 |
-| 5 | 文件下载/导出用 `actionType: "download"`，禁止 `ajax` + `responseType: "blob"` 或裸 `fetch()` | references/dialog-actions.md §2 |
-| 6 | select 远程联想：`autoComplete` 必须是对象（含 method/url/sendOn），不能是 `true` + 外部 source | references/form-controls.md §3 |
-| 7 | 文件上传提交：`input-file` 加 `asBlob: true`，api 加 `dataType: "form-data"` | references/form-controls.md §5 |
-| 8 | 控制表单项宽度用 `columnRatio`，`size`/`style.width`/`inputClassName` 均无效 | references/form-controls.md §6 |
-| 9 | footerToolbar 统计条用 `tpl`（`${total}`），不用 `statistics`（单页时不渲染） | references/crud.md §2 |
-| 10 | 非 amis 标准后端响应结构必须用 `adaptor` 转换（官方标准名，统一此拼写），不能假设后端适配 | references/data-source.md §2 |
+| ID | 一句话 | 权威定义 |
+|---|---|---|
+| R-01 | JSON 配置内禁止注释 | META.md |
+| C-01 | perPageAvailable 放 crud 顶层 | references/crud.md §1 |
+| C-04 | 统计条用 tpl 不用 statistics | references/crud.md §2 |
+| D-03 | 事件动作 reload 用 componentId | references/dialog-actions.md §3 |
+| D-01/D-04/D-06 | 弹层提交：close:false+submitSucc 关窗，禁 loadingOn/onEvent.submit | references/dialog-actions.md §1 |
+| D-02/D-08 | 下载导出只用 download，loadingOn+setValue 配对 | references/dialog-actions.md §2 |
+| F-03 | autoComplete 必须是对象 | references/form-controls.md §3 |
+| F-05 | 上传 asBlob 与 form-data 成对 | references/form-controls.md §5 |
+| F-06 | 宽度只认 columnRatio | references/form-controls.md §6 |
+| A-02 | 非标准响应用 adaptor 转换 | references/data-source.md §2 |
 
 ## 2. 场景 → 组件决策表
 
@@ -43,21 +41,20 @@ disable: false
 | 表格loading/按钮防重复 | 弹层提交靠内建 loading；导出/下载按钮用 Service 包层 + data 变量 + loadingOn | 弹层提交按钮配 loadingOn（死配置） |
 | 刷新其他组件 | 事件动作用 componentId reload；close:false 弹层默认不刷新 crud，须在 submitSucc 里显式 componentId reload | 弹层 form api 里写 reload（close:false 下不生效，实测） |
 
-## 3. references 索引（按需读取）
+## 3. 触发矩阵（按需读取）
 
-| 文件 | 内容 | 何时读 |
-|------|------|--------|
-| references/crud.md | CRUD 骨架/分页/工具栏/刷新机制/loadDataOnce | 生成任何 crud 时 |
-| references/dialog-actions.md | 弹层提交/loading/下载/动作链/刷新 | 生成弹层、按钮动作时 |
-| references/form-controls.md | select字典/autoComplete/校验/文件上传/宽度 | 生成表单时 |
-| references/data-source.md | api配置/adapter数据转换/source数据源 | 对接任何接口时 |
-| references/pitfalls.md | 踩坑手册（症状→错误→正确） | 自检或排查问题时 |
-| examples/ | 3个完整骨架片段 | 需要整体参考时 |
+| 触发信号 | 必读 |
+|---|---|
+| crud / 列表 / 表格 / 分页 / 工具栏 | references/crud.md |
+| dialog / drawer / 弹层 / 提交按钮 / 动作 / 刷新 | references/dialog-actions.md |
+| form / 表单 / select / 校验 / 上传 / 字典 | references/form-controls.md |
+| api / 接口 / 后端字段 / 响应结构 / 变量取值 | references/data-source.md |
+| 不生效 / 没反应 / 报错 / 排查 / 为什么 | references/pitfalls.md |
+| 需要整页骨架 | 本文 §4 examples 索引 |
+
+命中即读，不得凭记忆作答。本 skill 规则多为反直觉坑点，凭常识推理必然出错。
 
 ## 4. examples 索引
 
-| 文件 | 场景 | 覆盖点 | 宿主依赖 |
-|------|------|--------|----------|
-| examples/crud-full.json | 列表页全套骨架 | Service包层(仅导出loading变量) + crud + filter(autoComplete联想/字典多选) + 导入弹层(input-file) + 新增弹层 + 导出下载(loadingOn配对) + mapping状态列 + operation列 + 分页 | 宿主：自包含 page |
-| examples/dialog-confirm-loading.json | 危险操作确认弹层（放 operation 列或 headerToolbar 均可） | close:false防自动关 + 内建loading防重复 + submitSucc动作链(reload/关弹窗) | 宿主：需 crud 设 id=mainCrud |
-| examples/bulk-actions-picker.json | 弹层/抽屉内数据选择器 | dialog + crud(loadDataOnce前端分页) + bulkActions批量提交 + selectedItems\|pick过滤器 + disabledOn未选中禁用 | 宿主：父页面需有 name=mainCrud 的 crud |
+- examples/crud-full.json：列表页全套骨架（crud+filter+导入/新增弹层+导出下载+mapping+分页），自包含
+- examples/dialog-confirm-loading.json（危险操作确认）与 examples/bulk-actions-picker.json（弹层内数据选择器）：宿主需 crud 设 id/name=mainCrud
