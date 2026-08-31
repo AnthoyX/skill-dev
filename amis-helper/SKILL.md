@@ -1,7 +1,7 @@
 ---
 name: amis-helper
 description: 百度amis低代码框架JSON Schema生成。包含高频坑点的避坑规则与可复用骨架，生成可直接落地的crud/弹层/表单/导入导出配置。
-version: 1.1.0
+version: 1.2.0
 amis-version: "6.x（规则实测基于 6.13.0）"
 allowed-tools: Read, Grep, Glob
 disable: false
