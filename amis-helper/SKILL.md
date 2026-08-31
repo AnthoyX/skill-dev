@@ -56,5 +56,4 @@ disable: false
 
 ## 4. examples 索引
 
-- examples/crud-full.json：列表页全套骨架（crud+filter+导入/新增弹层+导出下载+mapping+分页），自包含
-- examples/dialog-confirm-loading.json（危险操作确认）与 examples/bulk-actions-picker.json（弹层内数据选择器）：宿主需 crud 设 id/name=mainCrud
+6 个片段（原整页示例 1:1 拆分）+ 宿主依赖 + 组合说明见 examples/INDEX.md。清单：crud-base.json（列表页骨架，自包含）、dialog-import.json（导入弹层）、dialog-form-add.json（新增弹层）、dialog-form-edit.json（编辑弹层）、dialog-confirm-loading.json（删除确认）、bulk-actions-picker.json（弹层内选择器）。

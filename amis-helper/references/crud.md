@@ -91,7 +91,7 @@
 
 ## §7 filter 顶部搜索表单
 
-filter 字段自动进入 crud 数据域，api.data 用 `${字段名}` 引用；actions 放 Reset + Submit 按钮。完整写法见 examples/crud-full.json。
+filter 字段自动进入 crud 数据域，api.data 用 `${字段名}` 引用；actions 放 Reset + Submit 按钮。完整写法见 examples/INDEX.md（crud-base.json + 弹层片段组合）。
 
 ## §8 loadDataOnce
 

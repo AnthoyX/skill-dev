@@ -53,7 +53,7 @@
 
 - 权威规则：32 条 = R×1 + C×8 + D×11 + F×10 + A×2（见各域文件）
 - 排障条目：16 条（`references/pitfalls.md`；P-01～P-16 批次 2 已落地）
-- 参考文档：5 份；示例：3 个（examples/INDEX.md 批次 3 建立，self-check.md 批次 4 新增）
+- 参考文档：5 份；示例：6 个 .json + 1 个 examples/INDEX.md 索引（批次 3：原 crud-full.json 拆 4 片段 + 2 保留；self-check.md 批次 4 新增）
 
 ## 变更记录
 
