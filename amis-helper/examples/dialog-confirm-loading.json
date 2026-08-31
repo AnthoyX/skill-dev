@@ -13,8 +13,7 @@
         "label": "Confirm Delete",
         "level": "danger",
         "actionType": "submit",
-        "close": false,
-        "loadingOn": "${deleteLoading}"
+        "close": false
       }
     ],
     "body": {
@@ -22,14 +21,8 @@
       "onEvent": {
         "submitSucc": {
           "actions": [
-            { "actionType": "setValue", "componentId": "pageStateService", "args": { "value": { "deleteLoading": false } } },
             { "actionType": "reload", "componentId": "mainCrud" },
             { "actionType": "closeDialog" }
-          ]
-        },
-        "submitFail": {
-          "actions": [
-            { "actionType": "setValue", "componentId": "pageStateService", "args": { "value": { "deleteLoading": false } } }
           ]
         }
       },

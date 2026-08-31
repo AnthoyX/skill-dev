@@ -6,8 +6,7 @@
       "type": "service",
       "id": "pageStateService",
       "data": {
-        "exportDownloading": false,
-        "formLoading": false
+        "exportDownloading": false
       },
       "body": [
         {
@@ -32,7 +31,7 @@
               "current": "${page}",
               "size": "${perPage}"
             },
-            "adapter": "return { ...payload, data: { items: payload.data.rows, total: payload.data.total } };"
+            "adaptor": "return { ...payload, data: { items: payload.data.rows, total: payload.data.total } };"
           },
           "filter": {
             "title": "Filter",
@@ -93,8 +92,7 @@
                     "label": "Confirm Import",
                     "level": "primary",
                     "actionType": "submit",
-                    "close": false,
-                    "loadingOn": "${formLoading}"
+                    "close": false
                   }
                 ],
                 "body": {
@@ -102,14 +100,8 @@
                   "onEvent": {
                     "submitSucc": {
                       "actions": [
-                        { "actionType": "setValue", "componentId": "pageStateService", "args": { "value": { "formLoading": false } } },
                         { "actionType": "reload", "componentId": "mainCrud" },
                         { "actionType": "closeDialog" }
-                      ]
-                    },
-                    "submitFail": {
-                      "actions": [
-                        { "actionType": "setValue", "componentId": "pageStateService", "args": { "value": { "formLoading": false } } }
                       ]
                     }
                   },
@@ -169,8 +161,7 @@
                     "label": "Submit",
                     "level": "primary",
                     "actionType": "submit",
-                    "close": false,
-                    "loadingOn": "${formLoading}"
+                    "close": false
                   }
                 ],
                 "body": {
@@ -178,14 +169,8 @@
                   "onEvent": {
                     "submitSucc": {
                       "actions": [
-                        { "actionType": "setValue", "componentId": "pageStateService", "args": { "value": { "formLoading": false } } },
                         { "actionType": "reload", "componentId": "mainCrud" },
                         { "actionType": "closeDialog" }
-                      ]
-                    },
-                    "submitFail": {
-                      "actions": [
-                        { "actionType": "setValue", "componentId": "pageStateService", "args": { "value": { "formLoading": false } } }
                       ]
                     }
                   },
@@ -285,8 +270,7 @@
                         "label": "Save",
                         "level": "primary",
                         "actionType": "submit",
-                        "close": false,
-                        "loadingOn": "${formLoading}"
+                        "close": false
                       }
                     ],
                     "body": {
@@ -294,14 +278,8 @@
                       "onEvent": {
                         "submitSucc": {
                           "actions": [
-                            { "actionType": "setValue", "componentId": "pageStateService", "args": { "value": { "formLoading": false } } },
                             { "actionType": "reload", "componentId": "mainCrud" },
                             { "actionType": "closeDialog" }
-                          ]
-                        },
-                        "submitFail": {
-                          "actions": [
-                            { "actionType": "setValue", "componentId": "pageStateService", "args": { "value": { "formLoading": false } } }
                           ]
                         }
                       },

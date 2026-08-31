@@ -62,7 +62,7 @@
 ]
 ```
 
-字符串简写（reload/filter-toggler）+ 按钮对象混用。`columns-toggler`、`drag-toggler` 需要 crud 设 `"columnsToggled": true` 类配置时使用。
+字符串简写（reload/filter-toggler）+ 按钮对象混用。`columns-toggler`、`drag-toggler` 可直接使用，无需额外配置；需要额外开关的是 `filter-toggler`——它要求 crud 设 `"filterTogglable": true` 才显示（amis 6.13.0 官方文档，`columnsToggled` 属性不存在）。
 
 ## §5 状态列用 mapping
 

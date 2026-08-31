@@ -1,0 +1,80 @@
+{
+  "type": "page",
+  "title": "V-3 download 时序验证",
+  "body": [
+    {
+      "type": "alert",
+      "level": "info",
+      "body": "点「点我下载」，盯住下面 exportDownloading 那行文字。接口延迟 3 秒。同时观察终端日志的时间戳。",
+      "className": "mb-3"
+    },
+    {
+      "type": "service",
+      "id": "pageStateService",
+      "data": {
+        "exportDownloading": false
+      },
+      "body": [
+        {
+          "type": "button",
+          "label": "点我下载（接口延迟 3 秒）",
+          "level": "primary",
+          "loadingOn": "${exportDownloading}",
+          "onEvent": {
+            "click": {
+              "actions": [
+                {
+                  "actionType": "setValue",
+                  "componentId": "pageStateService",
+                  "args": { "value": { "exportDownloading": true } }
+                },
+                {
+                  "actionType": "download",
+                  "args": {
+                    "api": {
+                      "method": "get",
+                      "url": "/api/mock2/sample?waitSeconds=3"
+                    }
+                  }
+                },
+                {
+                  "actionType": "setValue",
+                  "componentId": "pageStateService",
+                  "args": { "value": { "exportDownloading": false } }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "tpl",
+          "tpl": "<div style='margin-top:12px;font-size:16px'>exportDownloading = <b>${exportDownloading}</b></div>"
+        },
+        { "type": "divider" },
+        {
+          "type": "tpl",
+          "tpl": "<div style='color:#999;margin-bottom:8px'>对照组：不带 loadingOn，用于排除 amis 内建 loading 的干扰</div>"
+        },
+        {
+          "type": "button",
+          "label": "对照组：不用 loadingOn，纯下载",
+          "onEvent": {
+            "click": {
+              "actions": [
+                {
+                  "actionType": "download",
+                  "args": {
+                    "api": {
+                      "method": "get",
+                      "url": "/api/mock2/sample?waitSeconds=3"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

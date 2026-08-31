@@ -38,6 +38,12 @@
 - 原因：fetch 不携带 AMIS auth token
 - 正确：用 AMIS 内置 `download` action
 
+### P1.8 弹层提交按钮配 loadingOn 是死配置
+- 症状：提交按钮配了 `loadingOn: "${formLoading}"`，但变量从未被置 `true`
+- 实测：submit 按钮有**内建 loading**，`loadingOn` 为 false 也照常转圈（2026-08-31，amis 6.13.0）；接口失败时 loading 正常结束、弹层保持、可重试
+- 正确：弹层提交按钮**不要配 `loadingOn`**，也不需要 Service 变量和 `setValue`；只有 `download` 导出按钮（无内建 loading）才需要 `loadingOn` + `setValue` 配对
+- 见 references/dialog-actions.md §1、§4
+
 ## P2 Select / 联想
 
 ### P2.1 autoComplete 不触发联想

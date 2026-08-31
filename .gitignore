@@ -1,0 +1,8 @@
+# amis 本地渲染实验室的 SDK（体积大，按需重新下载即可）
+_amis-lab/vendor/
+
+# IDE
+.idea/
+
+# CodeBuddy 工作数据
+.codebuddy/

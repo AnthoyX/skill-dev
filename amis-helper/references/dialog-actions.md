@@ -20,8 +20,7 @@
         "label": "确认删除",
         "level": "danger",
         "actionType": "submit",
-        "close": false,
-        "loadingOn": "${deleteLoading}"
+        "close": false
       }
     ],
     "body": {
@@ -29,14 +28,8 @@
       "onEvent": {
         "submitSucc": {
           "actions": [
-            { "actionType": "setValue", "componentId": "外层service", "args": { "value": { "deleteLoading": false } } },
             { "actionType": "reload", "componentId": "目标crud的id" },
             { "actionType": "closeDialog" }
-          ]
-        },
-        "submitFail": {
-          "actions": [
-            { "actionType": "setValue", "componentId": "外层service", "args": { "value": { "deleteLoading": false } } }
           ]
         }
       },
@@ -54,13 +47,14 @@
 }
 ```
 
-关键规则：
-- `close: false`：阻止提交后立即自动关弹框（否则 loading 没意义）
-- `submitSucc` 中手动 `closeDialog`；`submitFail` **不关**（用户可重试）
+关键规则（依据 2026-08-31 实测，amis 6.13.0）：
+- `close: false`：**必须**。阻止提交后立即自动关弹框——否则弹层秒关，loading 根本看不见
+- **不要给提交按钮配 `loadingOn`**：`actionType: "submit"` 的按钮有 amis **内建 loading**（实测：`loadingOn` 恒为 false 时按钮照样转圈，配了也是死配置）。接口失败时内建 loading 会正常结束、弹层保持打开、可再次提交，**无需任何 `setValue` 配合**
+- `submitSucc` 中手动 `closeDialog`；`submitFail` **不用写**（默认就不关弹层，可重试）
 - **禁止 form `onEvent.submit`**：会拦截 `actionType: "submit"` 的内置 API 调用，接口不发出
-- loading 变量声明在外层 Service 的 `data` 里（crud 的 setValue 不传播到 headerToolbar）→ §4
 - 确认弹层用 `actionType: "dialog"` 自定义弹框，不用 `confirmText`（浏览器原生框无法 loading、无法展示复杂提示）
-- `close: false` 模式下 form api 的 `reload` 不生效（见 pitfalls P1.4），可省略；刷新统一靠 `submitSucc` 内显式 `{"actionType": "reload", "componentId": "..."}` 触发。examples 中 api.reload 保留仅作"语义标记"，不影响功能
+- 弹层 form 提交后**默认会自动刷新 CRUD**（官方行为，可用 `reload: "none"` 关闭）；`submitSucc` 里显式 `{"actionType": "reload", "componentId": "..."}` 是 `close: false` 场景下的可靠写法
+- `close: false` 模式下 form api 的 `reload` 是否生效待 V-2 实测确认；`submitSucc` 已有显式 reload 时，api 里的 `reload` 是冗余的
 
 ## §2 下载/导出（唯一正确写法）
 
@@ -101,20 +95,24 @@
 
 | 位置 | 属性 | 说明 |
 |------|------|------|
-| 事件动作（onEvent 内） | `componentId` | 匹配组件的 `id` 属性；用 `target` 不生效 |
+| 事件动作（`onEvent.actions` 内） | `componentId` | 匹配组件的 `id` 属性；**此处**用 `target` 不生效 |
+| `{"type":"action","actionType":"reload"}` 按钮 | `target` | 值为组件 `name`，**官方支持的合法写法**（官方 crud 文档「刷新按钮」章节），不要误判为错误 |
 | form api 配置 | `reload` | 值为组件 `name` |
 
-所以被刷新的 crud 必须**同时**设 `id` 和 `name`。
+所以被刷新的 crud 建议**同时**设 `id` 和 `name`，两种定位方式都能命中。
 
-## §4 Service 包装层（loading 变量作用域）
+## §4 Service 包装层（仅导出/下载类按钮需要）
 
-问题：crud 内 `setValue` 的变量不传播到 headerToolbar 子组件，按钮 `loadingOn` 读不到。
+**弹层提交按钮不需要 Service 包层**——submit 有内建 loading（见 §1）。
+只有 `onEvent.click` + `download` 这类**无内建 loading 的按钮**才需要 loading 变量：
+crud 内 `setValue` 的变量不传播到 headerToolbar 子组件，按钮 `loadingOn` 读不到，
+所以变量必须声明在外层 Service 的 `data` 里。
 
 ```json
 {
   "type": "service",
   "id": "pageStateService",
-  "data": { "exportDownloading": false, "formLoading": false },
+  "data": { "exportDownloading": false },
   "body": [ { "type": "crud", "id": "xxxCrud", "name": "xxxCrud", "...": "..." } ]
 }
 ```

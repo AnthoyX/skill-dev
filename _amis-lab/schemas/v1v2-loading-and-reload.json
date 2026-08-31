@@ -1,0 +1,213 @@
+{
+  "type": "page",
+  "title": "V-1 + V-2 联合验证",
+  "body": [
+    {
+      "type": "service",
+      "id": "pageStateService",
+      "data": {
+        "loadingA": false,
+        "loadingB": false
+      },
+      "body": [
+        {
+          "type": "alert",
+          "level": "warning",
+          "body": "<div style='font-size:14px;line-height:1.9'><b>操作流程：两步，别急</b><br/><b>第 1 步</b>　点下面 A / B / C 任意一个按钮 —— 它们<b>只负责打开弹层，不调接口</b><br/><b>第 2 步</b>　在弹层里点右下角的「<b>提交（调接口）</b>」按钮 —— <b>这一步才调接口</b>，延迟 2 秒<br/><br/><b>观察两点：</b><br/>① 弹层里那个「提交」按钮<b>转不转圈</b><br/>② 终端日志有没有<b>新增</b>一条 <code>GET /api/mock2/sample</code>（crud 刷新）<br/><br/>测完关掉弹层，再测下一组。</div>",
+          "className": "mb-3"
+        },
+        {
+          "type": "tpl",
+          "tpl": "<div style='font-size:15px;padding:6px 0'>loadingA = <b>${loadingA}</b> ｜ loadingB = <b>${loadingB}</b></div>"
+        },
+        { "type": "divider" },
+        {
+          "type": "button",
+          "label": "A：打开弹层（loadingOn + 置 true + api 带 reload）",
+          "level": "primary",
+          "className": "mb-2",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "A 组 - 修复方案",
+            "actions": [
+              { "type": "button", "label": "取消", "actionType": "close" },
+              {
+                "type": "button",
+                "label": "提交（调接口）",
+                "level": "primary",
+                "actionType": "submit",
+                "close": false,
+                "loadingOn": "${loadingA}",
+                "onEvent": {
+                  "click": {
+                    "actions": [
+                      {
+                        "actionType": "setValue",
+                        "componentId": "pageStateService",
+                        "args": { "value": { "loadingA": true } }
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "body": {
+              "type": "form",
+              "body": [
+                {
+                  "type": "alert",
+                  "level": "info",
+                  "body": "点本弹层<b>右下角的「提交（调接口）」</b>，接口延迟 2 秒。<br/>观察这个按钮<b>是否转圈</b>，并看终端是否新增 crud 请求。"
+                },
+                { "type": "tpl", "tpl": "本组 api <b>带</b> <code>reload: mainCrud</code>" },
+                { "type": "input-text", "name": "engine", "label": "Engine" }
+              ],
+              "onEvent": {
+                "submitSucc": {
+                  "actions": [
+                    {
+                      "actionType": "setValue",
+                      "componentId": "pageStateService",
+                      "args": { "value": { "loadingA": false } }
+                    },
+                    { "actionType": "closeDialog" }
+                  ]
+                },
+                "submitFail": {
+                  "actions": [
+                    {
+                      "actionType": "setValue",
+                      "componentId": "pageStateService",
+                      "args": { "value": { "loadingA": false } }
+                    }
+                  ]
+                }
+              },
+              "api": {
+                "method": "post",
+                "url": "/api/mock2/sample?waitSeconds=2",
+                "reload": "mainCrud"
+              }
+            }
+          }
+        },
+        {
+          "type": "button",
+          "label": "B：打开弹层（loadingOn 但不置 true，skill 现状）",
+          "level": "danger",
+          "className": "mb-2 ml-2",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "B 组 - skill 现有写法",
+            "actions": [
+              { "type": "button", "label": "取消", "actionType": "close" },
+              {
+                "type": "button",
+                "label": "提交（调接口）",
+                "level": "primary",
+                "actionType": "submit",
+                "close": false,
+                "loadingOn": "${loadingB}"
+              }
+            ],
+            "body": {
+              "type": "form",
+              "body": [
+                {
+                  "type": "alert",
+                  "level": "info",
+                  "body": "同样点<b>右下角「提交（调接口）」</b>。<br/>本组 <code>loadingB</code> 从未置 true，<b>预期不转圈</b> —— 这就是 P0-1 要证实的 bug。"
+                },
+                { "type": "tpl", "tpl": "本组 api <b>不带</b> reload" },
+                { "type": "input-text", "name": "engine", "label": "Engine" }
+              ],
+              "onEvent": {
+                "submitSucc": {
+                  "actions": [
+                    {
+                      "actionType": "setValue",
+                      "componentId": "pageStateService",
+                      "args": { "value": { "loadingB": false } }
+                    },
+                    { "actionType": "closeDialog" }
+                  ]
+                },
+                "submitFail": {
+                  "actions": [
+                    {
+                      "actionType": "setValue",
+                      "componentId": "pageStateService",
+                      "args": { "value": { "loadingB": false } }
+                    }
+                  ]
+                }
+              },
+              "api": {
+                "method": "post",
+                "url": "/api/mock2/sample?waitSeconds=2"
+              }
+            }
+          }
+        },
+        {
+          "type": "button",
+          "label": "C：打开弹层（不带 loadingOn，看内建 loading）",
+          "className": "mb-2 ml-2",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "C 组 - 对照组",
+            "actions": [
+              { "type": "button", "label": "取消", "actionType": "close" },
+              {
+                "type": "button",
+                "label": "提交（调接口）",
+                "level": "primary",
+                "actionType": "submit",
+                "close": false
+              }
+            ],
+            "body": {
+              "type": "form",
+              "body": [
+                {
+                  "type": "alert",
+                  "level": "info",
+                  "body": "点<b>右下角「提交（调接口）」</b>。<br/>本组完全不带 <code>loadingOn</code>，看 amis <b>是否自带 loading</b>。"
+                },
+                { "type": "input-text", "name": "engine", "label": "Engine" }
+              ],
+              "onEvent": {
+                "submitSucc": {
+                  "actions": [{ "actionType": "closeDialog" }]
+                }
+              },
+              "api": {
+                "method": "post",
+                "url": "/api/mock2/sample?waitSeconds=2"
+              }
+            }
+          }
+        },
+        { "type": "divider" },
+        {
+          "type": "tpl",
+          "tpl": "<div style='color:#999;margin-bottom:8px'>下面是 mainCrud（id 和 name 都是 mainCrud）。它的每次请求都会打印到终端，这是判断 V-2 的唯一依据。</div>"
+        },
+        {
+          "type": "crud",
+          "id": "mainCrud",
+          "name": "mainCrud",
+          "syncLocation": false,
+          "perPageAvailable": [10, 20],
+          "api": "/api/mock2/sample",
+          "columns": [
+            { "name": "id", "label": "ID" },
+            { "name": "engine", "label": "Engine" },
+            { "name": "browser", "label": "Browser" },
+            { "name": "version", "label": "Version" }
+          ]
+        }
+      ]
+    }
+  ]
+}

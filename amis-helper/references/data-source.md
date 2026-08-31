@@ -2,14 +2,21 @@
 
 ## §1 api 配置三种写法
 
+**1. 字符串简写（GET）**
+
 ```json
-// 1. 字符串简写（GET）
 "api": "/XXX/XXXX/list"
+```
 
-// 2. 方法前缀简写
+**2. 方法前缀简写**
+
+```json
 "api": "put:/XXX/XXXX/reset/${id}"
+```
 
-// 3. 对象（推荐，可控制 data/headers）
+**3. 对象（推荐，可控制 data/headers）**
+
+```json
 "api": {
   "method": "post",
   "url": "/XXX/XXXX/page",
@@ -19,23 +26,27 @@
 
 支持的 method：get/post/put/delete。
 
-## §2 响应结构转换（adapter/adaptor）
+## §2 响应结构转换（adaptor）
 
 amis 标准响应：`{ status: 0, data: { items: [...], total: n } }`。
 
 非标准响应必须转换，两种位置：
 
+crud/form 的 api：转响应结构。**统一用官方标准名 `adaptor`**（`adapter` 也能识别，但不要混用）：
+
 ```json
-// crud/form 的 api：转响应结构（adapter 或 adaptor 均有效，官方标准名是 adaptor）
 {
   "api": {
     "method": "post",
     "url": "/XXX/XXXX/page",
-    "adapter": "return { ...payload, data: { items: payload.data.rows, total: payload.data.total } };"
+    "adaptor": "return { ...payload, data: { items: payload.data.rows, total: payload.data.total } };"
   }
 }
+```
 
-// select 等的 source：转字典数据
+select 等的 `source`：转字典数据：
+
+```json
 {
   "source": {
     "url": "/XXX/XXXX/dict/list?type=Country",
