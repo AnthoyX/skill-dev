@@ -108,8 +108,7 @@
                   "api": {
                     "method": "post",
                     "url": "/XXX/XXXX/import",
-                    "dataType": "form-data",
-                    "reload": "mainCrud"
+                    "dataType": "form-data"
                   },
                   "body": [
                     { "type": "alert", "body": "Import rules here.", "level": "warning" },
@@ -176,8 +175,7 @@
                   },
                   "api": {
                     "method": "post",
-                    "url": "/XXX/XXXX/add",
-                    "reload": "mainCrud"
+                    "url": "/XXX/XXXX/add"
                   },
                   "body": [
                     {
@@ -285,8 +283,7 @@
                       },
                       "api": {
                         "method": "post",
-                        "url": "/XXX/XXXX/edit",
-                        "reload": "mainCrud"
+                        "url": "/XXX/XXXX/edit"
                       },
                       "body": [
                         { "type": "static", "name": "code", "label": "Code", "value": "${code}" },

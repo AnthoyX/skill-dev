@@ -233,6 +233,44 @@
             }
           }
         },
+        {
+          "type": "button",
+          "label": "E：打开弹层（submitSucc 显式 componentId reload）",
+          "level": "primary",
+          "className": "mb-2 ml-2",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "E 组 - submitSucc 显式 reload",
+            "actions": [
+              { "type": "button", "label": "取消", "actionType": "close" },
+              {
+                "type": "button",
+                "label": "提交（调接口）",
+                "level": "primary",
+                "actionType": "submit",
+                "close": false
+              }
+            ],
+            "body": {
+              "type": "form",
+              "body": [
+                { "type": "tpl", "tpl": "本组 api <b>不带</b> reload，submitSucc 里<b>显式</b> <code>componentId: mainCrud</code> reload" }
+              ],
+              "onEvent": {
+                "submitSucc": {
+                  "actions": [
+                    { "actionType": "reload", "componentId": "mainCrud" },
+                    { "actionType": "closeDialog" }
+                  ]
+                }
+              },
+              "api": {
+                "method": "post",
+                "url": "/api/mock2/sample?waitSeconds=2"
+              }
+            }
+          }
+        },
         { "type": "divider" },
         {
           "type": "tpl",

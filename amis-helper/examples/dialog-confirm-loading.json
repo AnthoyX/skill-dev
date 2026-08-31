@@ -29,8 +29,7 @@
       "api": {
         "method": "post",
         "url": "/XXX/XXXX/delete",
-        "data": { "id": "${id}" },
-        "reload": "mainCrud"
+        "data": { "id": "${id}" }
       },
       "body": [
         { "type": "alert", "body": "Confirm delete this record? This action cannot be undone.", "level": "warning" },

@@ -21,8 +21,8 @@
 
 ### P1.4 close:false 模式下 api.reload 不生效
 - 症状：form api 里写了 reload 但表格不刷
-- 原因：`close: false` 阻止了 api.reload 触发
-- 正确：在 `submitSucc` 中显式 `{"actionType": "reload", "componentId": "..."}`
+- 原因：`close: false` 阻止了 api.reload 触发（2026-08-31 V-2 实测：带 reload 与不带均无 crud 请求，且默认不刷新）
+- 正确：在 `submitSucc` 中显式 `{"actionType": "reload", "componentId": "..."}`（V-2 实测有效）
 
 ### P1.5 CRUD setValue 变量不传播
 - 症状：headerToolbar 按钮 `loadingOn: "${exportDownloading}"` 读不到变量

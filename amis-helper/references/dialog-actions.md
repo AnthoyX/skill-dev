@@ -36,8 +36,7 @@
       "api": {
         "method": "post",
         "url": "/XXX/XXXX/delete",
-        "data": { "id": "${id}" },
-        "reload": "目标crud的name"
+        "data": { "id": "${id}" }
       },
       "body": [
         { "type": "alert", "body": "确认删除该条记录?", "level": "warning" }
@@ -53,8 +52,8 @@
 - `submitSucc` 中手动 `closeDialog`；`submitFail` **不用写**（默认就不关弹层，可重试）
 - **禁止 form `onEvent.submit`**：会拦截 `actionType: "submit"` 的内置 API 调用，接口不发出
 - 确认弹层用 `actionType: "dialog"` 自定义弹框，不用 `confirmText`（浏览器原生框无法 loading、无法展示复杂提示）
-- 弹层 form 提交后**默认会自动刷新 CRUD**（官方行为，可用 `reload: "none"` 关闭）；`submitSucc` 里显式 `{"actionType": "reload", "componentId": "..."}` 是 `close: false` 场景下的可靠写法
-- `close: false` 模式下 form api 的 `reload` 是否生效待 V-2 实测确认；`submitSucc` 已有显式 reload 时，api 里的 `reload` 是冗余的
+- 弹层**默认关闭模式**（close 缺省）下提交后自动刷新 CRUD（官方 crud 文档「增」章节，据官方文档未实测）；`close: false` 模式下**默认不刷新**（V-2 实测：提交后无任何 crud 请求）
+- `close: false` 模式下 form api 的 `reload` **不生效**（V-2 实测：带 reload 与不带均无 crud 请求，submitSucc 显式 reload 才触发），**api 里不要写 `reload`**；唯一可靠写法是 `submitSucc` 显式 `{"actionType": "reload", "componentId": "..."}`（V-2 E 组实证有效）
 
 ## §2 下载/导出（唯一正确写法）
 
@@ -97,7 +96,7 @@
 |------|------|------|
 | 事件动作（`onEvent.actions` 内） | `componentId` | 匹配组件的 `id` 属性；**此处**用 `target` 不生效 |
 | `{"type":"action","actionType":"reload"}` 按钮 | `target` | 值为组件 `name`，**官方支持的合法写法**（官方 crud 文档「刷新按钮」章节），不要误判为错误 |
-| form api 配置 | `reload` | 值为组件 `name` |
+| form api 配置 | `reload` | 值为组件 `name`；仅默认关闭模式有效（据官方文档），`close: false` 下不生效（V-2 实测） |
 
 所以被刷新的 crud 建议**同时**设 `id` 和 `name`，两种定位方式都能命中。
 

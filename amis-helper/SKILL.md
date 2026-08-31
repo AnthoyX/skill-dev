@@ -41,7 +41,7 @@ disable: false
 | 远程联想输入 | select + autoComplete 对象 | input-text 手输 |
 | 弹层内选择数据 | dialog + crud(loadDataOnce) + bulkActions | |
 | 表格loading/按钮防重复 | 弹层提交靠内建 loading；导出/下载按钮用 Service 包层 + data 变量 + loadingOn | 弹层提交按钮配 loadingOn（死配置） |
-| 刷新其他组件 | 事件动作用 componentId reload；弹层 form 提交后默认自动刷新 crud（官方行为） | |
+| 刷新其他组件 | 事件动作用 componentId reload；close:false 弹层默认不刷新 crud，须在 submitSucc 里显式 componentId reload | 弹层 form api 里写 reload（close:false 下不生效，实测） |
 
 ## 3. references 索引（按需读取）
 

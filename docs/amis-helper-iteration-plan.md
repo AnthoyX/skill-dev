@@ -8,7 +8,7 @@
 | 路线图覆盖 | v1.1（止血）→ v1.2（提质/提命中）→ v2.0（扩能力/建机制） |
 | 状态 | 待评审 |
 | 实测环境 | amis 6.13.0，本地实验室 `_amis-lab/` |
-| 实测进展 | V-1 ✅ / V-1-D ✅ / V-3 ✅ / V-2 ⏳ 待补（见 §5.1） |
+| 实测进展 | V-1 ✅ / V-1-D ✅ / V-3 ✅ / V-2 ✅（见 §5.1） |
 
 ---
 
@@ -356,12 +356,23 @@ amis-helper/
 | V-1 | submit 按钮声明 `loadingOn` 后，内建 loading 是否失效？ | ✅ **内建 loading 始终有效**，`loadingOn` 恒 false 也照常转圈 | `D-01` 应**删掉** `loadingOn` 三件套，而非补全 |
 | V-1-D | 接口失败时 loading 是否正常结束、能否重试？ | ✅ 2 秒后 loading 消失 / 弹层保持打开 / 可再次提交 | 失败分支无需额外处理 |
 | V-3 | `download` 是否等待下载完成才执行后续 action？ | ✅ **等待**（`waitSeconds=3` 实测 loading 持续 3 秒） | Export 的 `loadingOn` 写法**有效，保留** |
-| V-2 | `close: false` 下 form api 的 `reload` 是否生效？ | ⏳ **待补** | 决定 `crud-full.json` 三处 `"reload"` 删还是留 |
+| V-2 | `close: false` 下 form api 的 `reload` 是否生效？ | ✅ **不生效**：A（带 reload）/ B（不带）提交后均无 crud 请求，且默认也不刷新；E 组（submitSucc 显式 componentId reload）才触发刷新 | `crud-full.json` 三处 + `dialog-confirm-loading.json` 一处 `"reload"` 已删；唯一写法是 submitSucc 显式 reload |
 
 > **V-2 判定方法**：终端日志中，每提交一次后是否**新增一条 `GET /api/mock2/sample`**。
 > `POST` 是表单提交本身，不算；只看 `GET`（crud 刷新）。
 > 若 A 组（带 `reload`）有而 B 组（不带）无 → `api.reload` 有效；
 > 若两组都有 → 刷新是弹层提交的默认行为（官方 crud 文档「增」章节），`api.reload` 冗余。
+>
+> **V-2 实测结果（2026-08-31，playwright 自动化点击 + 网络请求比对，amis 6.13.0）**：
+>
+> | 组 | api.reload | submitSucc 显式 reload | 提交后新增 GET |
+> |---|---|---|---|
+> | A | `"reload": "mainCrud"` | 无 | ❌ 无（仅 POST） |
+> | B | 无 | 无 | ❌ 无（仅 POST） |
+> | E（补测） | 无 | `componentId: "mainCrud"` | ✅ 有 |
+>
+> **结论：`close: false` 下 form api 的 `reload` 不生效，弹层提交也不默认刷新 CRUD；
+> 唯一可靠写法是 `submitSucc` 显式 `{"actionType": "reload", "componentId": "..."}`（E 组实证）。**
 
 **改动项**
 
@@ -388,7 +399,7 @@ amis-helper/
 - [ ] 全文检索 `api.reload`、`adaptor`、`loadingOn`、`target`，各文件说法一致，无相互矛盾
 - [ ] `META.md` 中存在明确的 amis 版本号或版本范围
 - [ ] 所有 `.md` 文档的代码块中不含 `//` 注释
-- [ ] V-2 实测结论已回填本文档
+- [x] V-2 实测结论已回填本文档
 
 **预估**：5 个文件改动，其中 `crud-full.json` 改动约 8 处。
 
@@ -590,7 +601,7 @@ amis-helper/
 | # | 问题 | 备选方案 | 建议 |
 |---|---|---|---|
 | Q1 | ~~loading 变量在哪里置 `true`？~~ | A：提交按钮 `onEvent.click` 里 `setValue true`；B：去掉 `loadingOn`，依赖 submit 内建 loading | ✅ **已由 V-1 实测消解，选 B**。实测 A/B/C 三组均转圈，内建 loading 已够用，A 方案纯属多余 |
-| Q2 | `close:false` 下 `api.reload` 是否真的无效、示例里还留吗？ | A：全部删除；B：保留并加注「无效，仅为语义标记」 | 建议 A。死配置留在示例里是持续的误导源。**待 V-2 实测确认** |
+| Q2 | `close:false` 下 `api.reload` 是否真的无效、示例里还留吗？ | A：全部删除；B：保留并加注「无效，仅为语义标记」 | ✅ **已由 V-2 实测消解，选 A**。实测不生效且默认不刷新，`crud-full.json` 三处 + `dialog-confirm-loading.json` 一处 api.reload 已全部删除 |
 | Q3 | `crud-full.json` 334 行如何处理？ | A：瘦身到 150 行内（抽掉 Edit 弹层等重复结构）；B：拆成 `crud-base.json` + 若干弹层片段，用 INDEX 组合；C：维持现状，接受超预算 | 建议 B。弹层结构高度重复，拆开后既能控行数又便于复用 |
 | Q4 | 新能力域的优先级？ | chart / permission / advanced-interaction / mobile | 建议 permission 优先——后台系统刚需，且坑点多（权限与 `disabledOn` 的交互） |
 | Q5 | 是否需要声明不适用的边界？ | 如「不适用于 amis-editor 可视化配置」「不适用于 amis 2.x」 | 建议声明。误触发的成本高于漏触发 |
@@ -637,11 +648,13 @@ amis-helper/
 |---|---|---|
 | 1 | 完成 V-1 实测（submit 内建 loading 是否失效） | ✅ 已完成——内建 loading 有效，`loadingOn` 冗余 |
 | 2 | 完成 V-3 实测（`download` 是否等待完成） | ✅ 已完成——等待，Export 写法有效 |
-| 3 | 补齐 V-2 实测（`close:false` 下 `api.reload` 是否生效） | ⏳ **待做，当前唯一阻塞项** |
-| 4 | 确认 Q2–Q5 开放问题（Q1 已被实测消解） | ⏳ 待定 |
-| 5 | 启动 v1.1 的 10 项改动（原 7 项 + 官方冲突 3 项） | ⏳ 待 3 完成 |
-| 6 | 建立 `tests/cases/002-dialog-submit-loading.md` 作为 v1.1 验收标尺 | ⏳ 待做 |
+| 3 | 补齐 V-2 实测（`close:false` 下 `api.reload` 是否生效） | ✅ 已完成——不生效且默认不刷新，submitSucc 显式 componentId reload 是唯一写法 |
+| 4 | 确认 Q2–Q5 开放问题（Q1 已被实测消解） | ⏳ 待定（Q2 已随 V-2 消解：选 A 全部删除） |
+| 5 | 启动 v1.1 的 10 项改动（原 7 项 + 官方冲突 3 项） | ✅ 已完成（1.1.1–1.1.10 全部落地）—— **v1.1 完成** |
+| 6 | 建立 `tests/cases/002-dialog-submit-loading.md` 作为 v1.1 验收标尺 | ⏳ 待做（归入 v1.2） |
 
 **Q1（loading 变量在哪置 `true`）已由 V-1 实测消解**——不需要置 `true`，直接删掉 `loadingOn` 三件套。
 
-**在 V-2 结论出来前，不建议开始扩能力域（v2.0）。**
+**Q2（api.reload 去留）已由 V-2 实测消解**——close:false 下不生效且默认不刷新，示例中 4 处 api.reload 全部删除。
+
+**V-2 阻塞已解除，v1.1 已收尾。扩能力域（v2.0）解除阻塞，仍建议先完成 v1.2 SSOT 重构。**

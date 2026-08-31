@@ -123,6 +123,6 @@ filter 字段自动进入 crud 数据域，api 的 data 里用 `${字段名}` �
 
 | 场景 | 写法 |
 |------|------|
-| 弹层默认模式（提交后自动关） | form api 里加 `"reload": "目标crud的name"` |
-| `close: false` 模式 | api.reload 不生效，必须在 `submitSucc` 里 `{"actionType": "reload", "componentId": "crud的id"}` |
+| 弹层默认模式（提交后自动关） | form api 里加 `"reload": "目标crud的name"`（据官方文档，未实测） |
+| `close: false` 模式 | api.reload **不生效**、默认也**不刷新**（2026-08-31 V-2 实测），必须靠 `submitSucc` 里 `{"actionType": "reload", "componentId": "crud的id"}`（已实证） |
 | 事件动作（onEvent.click 等） | `{"actionType": "reload", "componentId": "..."}`（用 componentId 非 target） |
