@@ -11,7 +11,7 @@
 ## 2. CRUD / 列表页
 
 - [ ] `perPageAvailable` 放 crud 顶层，不在 footerToolbar 组件内？→ `C-01`
-- [ ] crud 同时设了 `id` 和 `name`？→ `C-02`
+- [ ] 被外部定位 / 刷新的 crud 同时设了 `id` 和 `name`？→ `C-02`
 - [ ] `syncLocation: false` 已设？→ `C-03`
 - [ ] footerToolbar 统计条用 `tpl`，未用 `statistics`？→ `C-04`
 - [ ] 后端分页字段非 page/perPage 时，api.data 已显式映射 `${page}` / `${perPage}`？→ `C-05`
@@ -50,5 +50,5 @@
 
 ## 6. 刷新定位
 
-- [ ] 仅弹层默认关闭模式（close 缺省）才在 form api 写 `reload`（值为 crud 的 `name`；与 `D-05` 的 close:false 边界相反，勿混用）？→ `D-11`
+- [ ] 【`D-11` 待实测 V-12，**勿据此判错**】当前一律按 `D-05`：form api 内不写 `reload`，刷新靠 `submitSucc` 显式 `componentId` reload
 - [ ] 被 reload 的目标 crud 同时设了 `id` 和 `name`？→ `C-02`

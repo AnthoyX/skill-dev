@@ -1,0 +1,482 @@
+# =====================================================================
+# 交接提示词 —— amis-helper v1.2 收尾：V-10 / V-11 / V-12 实测 + 规则落地
+# 用法：新开对话，把本文件**整份**复制作为第一条消息
+# 生成日期：2026-09-01
+# 前置：外部 AI 已完成 5 个争议问题的定夺，结论在
+#       docs/review-external-out-260901.yaml 末尾（第 285-430 行）
+# =====================================================================
+
+角色: 你是 amis 6.13.0 运行时行为验证专家。任务是跑 3 组对照实验，然后按结论落地 skill 文档改动。
+纪律: |
+  - **先实测后改 skill**。实测阶段只允许改 `_amis-lab/schema.json`，`amis-helper/` 下任何文件不得动
+  - 每组实验必须有终端日志或界面证据，不靠推理下结论
+  - 判定不了就标「无法判定」，不要猜
+  - 所有写入文件保持 CRLF 换行
+  - 中文交流，先结论后展开，结构化输出（YAML 优先）
+
+# =====================================================================
+环境:
+  工作目录: e:\work_2026\skill-dev
+  实验室: _amis-lab/
+  启动: |
+    cd e:\work_2026\skill-dev\_amis-lab
+    python server.py          # 端口被占用则 python server.py 9000
+  打开: http://localhost:8080
+  唯一需改的文件: _amis-lab/schema.json   # 改完刷新浏览器即生效，无缓存问题
+  amis 版本: 固定 6.13.0（vendor/ 已含全量 8 个 SDK 文件，勿动）
+
+  mock 能力:
+    - 任意 /api/** 路径都被接管，返回 amis 标准结构 {status:0,msg,data:{count,total,rows,items}}
+    - GET/POST/PUT/DELETE 全支持
+    - '?waitSeconds=N' 延迟 N 秒返回（制造 loading/时序的唯一干净手段）
+    - '?fail=1' 返回 status=1（触发 submitFail 分支）
+    - 终端打印毫秒级时间戳：请求到达一条、响应一条，body 前 300 字符
+  判定时序的方法: |
+    比对「前端现象发生时刻」与终端「响应」那条日志的时刻。
+    判断某操作是否触发 crud 刷新 → 看终端是否**新增**一条 GET /api/mock2/sample。
+
+# =====================================================================
+一_项目背景:
+
+  被维护对象: |
+    amis-helper —— 一个 AI Skill，指导 AI 生成可直接落地的 amis JSON Schema
+    （后台管理 CRUD 页面）。路径 amis-helper/，当前版本 1.2.0。
+
+  文件结构: |
+    amis-helper/
+      SKILL.md(61行)  META.md(66行)  CHANGELOG.md(25行)
+      references/ crud.md(107) dialog-actions.md(100) form-controls.md(105)
+                  data-source.md(62) pitfalls.md(59) self-check.md(54)
+      examples/   6 个 .json + INDEX.md
+    docs/         评审与计划文档
+    _amis-lab/    渲染实验室
+
+  核心机制_务必理解:
+    SSOT 规则 ID 体系: |
+      32 条权威规则，前缀分域：
+        R-xx 跨域×1 | C-xx CRUD×8 | D-xx 弹层动作×11 | F-xx 表单×10 | A-xx 接口×2
+      铁律：一条规则**全文仅一处权威定义**，其余位置只引 ID。
+      每条权威规则带四要素元数据：`来源|状态|版本|违反后果`
+    P-xx: 排障条目（pitfalls.md，只写症状+错误写法+ID 指向，不含正确写法）
+    可信度三级: |
+      已实测      —— 6.13.0 真机验证过，来源必须含 `V-x实测(日期)`
+      据官方文档  —— 有文档/issue 佐证，未单独实测
+      实战观察    —— 踩坑总结，机制未复现
+      迁移规范：实战观察 --实测通过+补 V-x 编号--> 已实测。缺编号与日期不得标「已实测」
+    已实测的 4 条: D-01 / D-04 / D-05 / D-08（V-1、V-1-D、V-2、V-3，2026-08-31）
+    自检清单准入标准（本次已写入 META.md）: |
+      门槛 = 「已实测（含 V-x 编号）」或「据官方文档且行为无歧义」
+      未实测或边界有歧义者不得入清单——先实测再入，或降级为 pitfalls 条目
+      允许同一 ID 跨组复检；SSOT「一 ID 一处权威定义」约束定义，不约束自检点
+
+  行数预算: |
+    规则层（SKILL+META+references）上限 800 行，现状 614，v2.0 后预计 ~766
+    → 每次新增前先算行数；META 新增段落能压到 3 行就别写 5 行
+
+# =====================================================================
+二_已完成_本次对话的产出_不要重做:
+
+  已落地 8 项文档改动:
+    - SKILL.md:12 标题改「高频 TOP14，非全集；完整 32 条见 META.md / references/ 各域文件，交付前必跑 self-check 全量核对」
+    - SKILL.md §1 补 D-05 行（close:false 下 form api 禁写 reload），弹层域 4 行重排
+    - META.md 新增「自检清单准入标准」小节（3 条，位于状态迁移规范之后、规则数量之前）
+    - crud.md:26 C-02 限定为「**被外部定位/刷新的** crud 才需同时设 id 和 name」
+    - self-check.md:14 C-02 措辞与限定后定义同步
+    - self-check.md:53 标「【D-11 待实测 V-12，勿据此判错】当前一律按 D-05」
+    - CHANGELOG.md:10 改「6 组 33 项（覆盖 32 条规则，C-02 跨组复检）」
+    - v2.0-plan.yaml：V-6 回填 disabled 源码结论 / V-10 增时序+属性名对照 / 批次 B 补 D-12 两列表格要求
+
+  外部评审已定夺的 5 个结论_摘要（详见 external-review-260901.yaml:285-430）:
+    Q1: F-02「required + validations.isRequired 双写」是冗余教法，应改为「required:true 单独即可」
+    Q2: D-11 未实测不得进自检清单，先跑 V-12 再定保留/删除
+    Q3: 新增 D-12 = 按钮级 reload（合并 target 与顶层 reload 两种写法），不拆 D-13
+    Q4: SKILL.md 硬规则索引改名不补全（已落地）
+    Q5: C-02 跨组复检保留 + 限定为「被外部定位/刷新的 crud」（已落地）
+
+  已知的 amis 源码级结论_外部评审给出_V11 只需验证最后一环:
+    - 'store/formItem.js config(): rules.isRequired = required || rules.isRequired'
+      → required:true 自动并入 isRequired，双写幂等无增强
+    - 'utils/validations.js isRequired: value!==undefined && value!=="" && value!==null && (!Array.isArray(value) || !!value.length)'
+      → 拦截 undefined/null/空串/空数组；放行 0、false；全空格串不拦截
+    - 'store/form.js getItems(): 不排除 hidden/visible=false 字段，全部参与校验'
+    - 'store/formItem.js validate(): 无 disabled 跳过逻辑，禁用字段仍参与校验'
+
+# =====================================================================
+三_本轮任务:
+  目标: 跑 V-10 / V-11 / V-12 三组实测，然后按结果落地剩余 10 项 skill 改动
+  顺序: V-11 → V-12 → V-10（V-11 最独立、结论最确定，先跑找手感）
+  产出: ① 三组实测结论 ② 10 项文档改动 ③ 回填 v2.0-plan.yaml 与 CHANGELOG
+
+# =====================================================================
+四_待跑实测:
+
+  ## V-11 —— required 校验链（验证 F-02 是否冗余 + 挖 P-17/P-18）
+  判定目标:
+    - required:true 单独是否拦截提交并提示（与 validations.isRequired 是否等价）
+    - ajax 按钮提交是否跳过 form 校验链（这是 F-02 当年误判的最可能起源）
+    - 值 0 / 全空格是否放行
+    - hidden 的必填字段是否误拦截（P-17 素材）
+  操作: 把下面 schema 整份写入 _amis-lab/schema.json，刷新浏览器，按「轮次」操作
+  schema: |
+    {
+      "type": "page",
+      "title": "V-11 required 校验链",
+      "body": [
+        {
+          "type": "alert",
+          "level": "info",
+          "body": "<div style='font-size:14px;line-height:1.9'><b>轮次 1</b>：A/B 留空、D 不选，点「submit 提交」→ 看 A/B/D 是否都报必填（预期是）<br/><b>轮次 2</b>：A、B 填任意值，C 填 <b>0</b>，D 选一项，E 填<b>一个空格</b>，点「submit 提交」→ 看是否放行、终端有无 POST（预期放行，证明 0 与空格算有值）<br/><b>轮次 3</b>：把 A 清空，点「<b>ajax 提交</b>」→ 看是否<b>不打校验直接发 POST</b>（预期直接发，这是 F-02 起源）<br/><b>轮次 4</b>：直接点下面第二个表单的提交 → 看隐藏必填字段是否误拦截（预期拦截 → P-17）</div>",
+          "className": "mb-3"
+        },
+        {
+          "type": "form",
+          "id": "formMain",
+          "api": { "method": "post", "url": "/api/mock2/form/saveForm?waitSeconds=1" },
+          "body": [
+            { "type": "input-text", "name": "a", "label": "A 仅 required:true", "required": true },
+            { "type": "input-text", "name": "b", "label": "B 仅 validations.isRequired", "validations": { "isRequired": true } },
+            { "type": "input-number", "name": "c", "label": "C required:true（填 0 测试放行）", "required": true },
+            { "type": "select", "name": "d", "label": "D required:true + multiple（不选=空数组）", "multiple": true, "required": true, "options": [{ "label": "x", "value": "x" }] },
+            { "type": "input-text", "name": "e", "label": "E required:true（填一个空格测试放行）", "required": true }
+          ],
+          "actions": [
+            { "type": "button", "label": "submit 提交（走校验链）", "level": "primary", "actionType": "submit" },
+            { "type": "button", "label": "ajax 提交（疑不走校验链）", "level": "danger", "actionType": "ajax", "api": { "method": "post", "url": "/api/mock2/form/saveForm?waitSeconds=1" } }
+          ]
+        },
+        { "type": "divider" },
+        {
+          "type": "tpl",
+          "tpl": "<div style='color:#999;margin:8px 0'>下面表单只有一个<b>隐藏的必填字段</b>，直接点提交看是否被拦截（P-17 素材）</div>"
+        },
+        {
+          "type": "form",
+          "id": "formHidden",
+          "api": { "method": "post", "url": "/api/mock2/form/saveForm?waitSeconds=1" },
+          "body": [
+            { "type": "input-text", "name": "f", "label": "F 隐藏的必填字段", "required": true, "hidden": true },
+            { "type": "input-text", "name": "g", "label": "G 普通字段（可留空）" }
+          ],
+          "actions": [
+            { "type": "button", "label": "提交（测隐藏必填是否误拦截）", "level": "primary", "actionType": "submit" }
+          ]
+        }
+      ]
+    }
+  判定标准:
+    - 轮次1: A/B/D 三个字段均出现必填错误提示，且终端**无** POST → required 单独有效、与 isRequired 等价
+    - 轮次2: 全部放行，终端出现 POST → 0 与全空格均视为有值
+    - 轮次3: 终端**出现** POST 且无校验提示 → ajax 按钮跳过 form 校验链（确证 F-02 起源）
+    - 轮次4: 被拦截、报 F 必填 → hidden 字段仍参与校验（P-17 成立）
+
+  ## V-12 —— close 缺省时 form api 的 reload 是否生效（决定 D-11 存废）
+  判定目标: 弹层默认关闭模式（close 缺省）下，form api 里写 "reload":"crudName" 是否触发 crud 刷新
+  schema: |
+    {
+      "type": "page",
+      "title": "V-12 close 缺省 form api reload",
+      "body": [
+        {
+          "type": "alert",
+          "level": "info",
+          "body": "<div style='font-size:14px;line-height:1.9'>页面加载时终端会有<b>第一条</b> GET /api/mock2/sample（crud 初始请求）。<br/>点 A/B 组按钮打开弹层 → 填任意值 → 点提交 → <b>看终端是否新增第二条 GET</b>。<br/>每组测完等弹层关闭再测下一组，必要时<b>刷新页面重置计数</b>。</div>",
+          "className": "mb-3"
+        },
+        {
+          "type": "crud",
+          "id": "mainCrud",
+          "name": "mainCrud",
+          "syncLocation": false,
+          "perPageAvailable": [10, 20],
+          "api": "/api/mock2/sample",
+          "columns": [
+            { "name": "id", "label": "ID" },
+            { "name": "engine", "label": "Engine" },
+            { "name": "browser", "label": "Browser" }
+          ]
+        },
+        { "type": "divider" },
+        {
+          "type": "button",
+          "label": "A 组：close 缺省 + api.reload=mainCrud",
+          "level": "primary",
+          "className": "mb-2",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "A 组 - close 缺省",
+            "body": {
+              "type": "form",
+              "api": { "method": "post", "url": "/api/mock2/form/saveForm?waitSeconds=2", "reload": "mainCrud" },
+              "body": [ { "type": "input-text", "name": "x", "label": "随便填" } ]
+            },
+            "actions": [
+              { "type": "button", "label": "取消", "actionType": "close" },
+              { "type": "button", "label": "提交", "level": "primary", "actionType": "submit" }
+            ]
+          }
+        },
+        {
+          "type": "button",
+          "label": "B 组：close:false + api.reload=mainCrud（对照组，V-2 已证不生效）",
+          "level": "danger",
+          "className": "mb-2 ml-2",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "B 组 - close:false 对照",
+            "body": {
+              "type": "form",
+              "api": { "method": "post", "url": "/api/mock2/form/saveForm?waitSeconds=2", "reload": "mainCrud" },
+              "body": [ { "type": "input-text", "name": "x", "label": "随便填" } ]
+            },
+            "actions": [
+              { "type": "button", "label": "取消", "actionType": "close" },
+              { "type": "button", "label": "提交", "level": "primary", "actionType": "submit", "close": false }
+            ]
+          }
+        }
+      ]
+    }
+  判定标准:
+    - A 组提交后终端**新增** GET → D-11 生效，保留并升「已实测 V-12」
+    - A 组**无**新增 GET（且 B 组也无）→ D-11 删除，D-05 扩为「所有模式都不要在 form api 写 reload」，规则数 32→31
+
+  ## V-10 —— 按钮级 reload（决定 D-12 正文怎么写）
+  判定目标: |
+    ① ajax 按钮顶层 "reload":"crudName" 是否生效（含跨弹层边界定位）
+    ② close:true 与 reload 的时序——关窗后还能不能定位到 name
+    ③ actionType:"reload" 的按钮上写 reload 属性，是否等价于写 target
+  schema: |
+    {
+      "type": "page",
+      "title": "V-10 按钮级 reload",
+      "body": [
+        {
+          "type": "alert",
+          "level": "info",
+          "body": "<div style='font-size:14px;line-height:1.9'>页面加载有<b>第一条</b> GET /api/mock2/sample。<br/><b>A1 组</b>：打开弹层 → 勾选一行 → 点 bulkActions 里的按钮（带 close:true）→ 看终端是否新增 GET<br/><b>A2 组</b>：同上但按钮<b>不带 close</b> → 对照组<br/><b>B 组</b>：直接点「B 组」按钮（actionType:reload + target）→ 看是否立即新增 GET<br/><b>C 组</b>：直接点「C 组」按钮（actionType:reload + 顶层 reload 属性，不用 target）→ 看是否等价于 B 组<br/>每组之间<b>刷新页面</b>重置计数。</div>",
+          "className": "mb-3"
+        },
+        {
+          "type": "crud",
+          "id": "mainCrud",
+          "name": "mainCrud",
+          "syncLocation": false,
+          "perPageAvailable": [10, 20],
+          "api": "/api/mock2/sample",
+          "columns": [
+            { "name": "id", "label": "ID" },
+            { "name": "engine", "label": "Engine" },
+            { "name": "browser", "label": "Browser" }
+          ]
+        },
+        { "type": "divider" },
+        {
+          "type": "button",
+          "label": "A1 组：弹层内 ajax 按钮 顶层reload + close:true",
+          "level": "primary",
+          "className": "mb-2",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "A1 组 - 带 close",
+            "size": "lg",
+            "actions": [],
+            "body": {
+              "type": "crud",
+              "loadDataOnce": true,
+              "selectable": true,
+              "api": "/api/mock2/sample",
+              "columns": [
+                { "name": "id", "label": "ID" },
+                { "name": "engine", "label": "Engine" }
+              ],
+              "bulkActions": [
+                {
+                  "type": "button",
+                  "label": "提交并刷新外层（顶层 reload + close:true）",
+                  "level": "primary",
+                  "actionType": "ajax",
+                  "api": { "method": "post", "url": "/api/mock2/form/saveForm?waitSeconds=2" },
+                  "close": true,
+                  "reload": "mainCrud"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "button",
+          "label": "A2 组：弹层内 ajax 按钮 顶层reload（不带 close）",
+          "level": "info",
+          "className": "mb-2 ml-2",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "A2 组 - 不带 close",
+            "size": "lg",
+            "actions": [],
+            "body": {
+              "type": "crud",
+              "loadDataOnce": true,
+              "selectable": true,
+              "api": "/api/mock2/sample",
+              "columns": [
+                { "name": "id", "label": "ID" },
+                { "name": "engine", "label": "Engine" }
+              ],
+              "bulkActions": [
+                {
+                  "type": "button",
+                  "label": "提交并刷新外层（顶层 reload，不带 close）",
+                  "level": "primary",
+                  "actionType": "ajax",
+                  "api": { "method": "post", "url": "/api/mock2/form/saveForm?waitSeconds=2" },
+                  "reload": "mainCrud"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "button",
+          "label": "B 组：actionType:reload + target",
+          "level": "success",
+          "className": "mb-2 ml-2",
+          "actionType": "reload",
+          "target": "mainCrud"
+        },
+        {
+          "type": "button",
+          "label": "C 组：actionType:reload + 顶层 reload 属性（不用 target）",
+          "level": "warning",
+          "className": "mb-2 ml-2",
+          "actionType": "reload",
+          "reload": "mainCrud"
+        }
+      ]
+    }
+  判定标准:
+    - A1/A2 提交后终端新增 GET → 按钮顶层 reload 生效且**跨弹层边界可定位**（name 沿作用域链向上冒泡）
+    - A1 与 A2 结果不同 → close 影响 reload，D-12 必须写明该时序约束
+    - B 组点击后新增 GET 且 C 组**无** → 刷新专用按钮只能用 target，D-12 正文必须分两列
+    - B 与 C 都生效 → 两者等价，D-12 可一句话表述
+
+# =====================================================================
+五_实测后要落的 10 项改动:
+
+  ## A 组：依赖 V-11（F-02 相关，4 项）
+    - 文件: amis-helper/references/form-controls.md:28
+      动作: |
+        F-02 改写为「必填只写 required:true，勿双写 validations.isRequired（幂等无增强）」，
+        并补 4 类边界：ajax 按钮提交跳过校验链 / 0 与 false 放行 / 全空格放行 /
+        hidden 字段仍参与校验会误拦截
+        来源改 `官方文档+amis-core源码`、状态改 `据官方文档`；
+        **V-11 跑通后**再补 `V-11实测(2026-09-01)` 升「已实测」
+        （META 规定缺实测编号不得标已实测，别一步到位）
+    - 文件: amis-helper/references/self-check.md:41
+      动作: 改「必填字段配了 `required: true`（无需双写 `isRequired`）？→ `F-02`」
+    - 文件: amis-helper/examples/dialog-form-add.json:39-40
+      动作: 删掉 `"validations": { "isRequired": true },` 一行
+    - 文件: amis-helper/references/pitfalls.md
+      动作: |
+        新增 2 条排障条目（只写症状+错误写法+ID 指向，不含正确写法）：
+        P-17 隐藏/不可见的必填字段导致提交被拦截 → 见 form-controls.md §2（F-02）
+        P-18 combo / input-table 行内必填不校验 → 见 form-controls.md §2（F-02）
+        同步更新 META.md「排障条目：16 条」→ 18 条
+
+  ## B 组：依赖 V-12（D-11 存废，2 项）
+    - 分支_生效: |
+        dialog-actions.md:45 D-11 来源补 `V-12实测(2026-09-01)`、状态升「已实测」
+        self-check.md:53 去掉「待实测」标记，恢复为正式自检项
+        META.md 可信度分级表「已实测」行补 D-11
+    - 分支_不生效: |
+        删除 D-11 权威定义（dialog-actions.md:45-46）
+        crud.md:107 刷新机制表最后一行改写为「任何模式都不要在 form api 写 reload，一律 submitSucc 显式 componentId reload」→ 指向 D-05
+        self-check.md:53 删除该行
+        dialog-actions.md §3 表格第三行同步
+        META.md 规则计数 32→31；32 条 → 31 条（C 组落地时一起算）
+        编号连续性检查：D-11 删除后 D 域变 D-01~D-10 + D-12，可接受（不强制重编号，CHANGELOG 注明）
+
+  ## C 组：依赖 V-10（D-12 落地，4 项）
+    - 文件: amis-helper/references/dialog-actions.md §3
+      动作: |
+        表格更新为三分（一次说清，防再混淆）：
+          事件动作 onEvent.actions 内 → componentId（值 id）→ D-03
+          按钮级 → target 或顶层 reload（值 name）→ D-12
+          form api 内 → reload（值 name）→ D-11（或按 V-12 结论改为「一律不写」）
+    - 文件: amis-helper/references/dialog-actions.md（新增 D-12 权威定义）
+      动作: |
+        四要素：`来源:官方文档(action.md)|状态:据官方文档|版本:6.x|后果:reload 不生效`
+        正文**必须写成两列表格**（若 V-10 证明 B/C 不等价）：
+          刷新专用按钮（actionType:"reload"）→ 用 target，点击立即刷新
+          业务按钮（ajax 等）→ 用顶层 reload 属性，操作完成后刷新
+        若 V-10 证明 B/C 等价，可一句话表述
+        若 V-10 证明 close 影响 reload，必须写明该时序约束
+    - 文件: amis-helper/references/crud.md:105
+      动作: 刷新机制表第 2 行 `D-03` 改 `D-12`
+    - 文件: amis-helper/references/self-check.md:29
+      动作: D-03 措辞收窄为「事件动作 reload 用 componentId」，按钮级引 D-12
+
+  ## D 组：收尾（3 项，依赖上面全部完成）
+    - 文件: amis-helper/examples/INDEX.md:17-18
+      动作: |
+        盲区注记改「属 D-12（按钮级 reload，指向 name）」，
+        bulk-actions-picker 覆盖规则 ID 列补 D-12；
+        内层 crud 补注「非 reload 目标，符合 C-02 限定」
+    - 文件: amis-helper/META.md
+      动作: |
+        ① 新增「reload 载体总表」（压到 6 行内，D-12 落地后一起加，避免悬空引用）
+        ② 规则数量同步（按 V-12 分支：32 或 31，再加 D-12）
+        ③ 可信度分级表「已实测」行同步新增项
+    - 文件: amis-helper/CHANGELOG.md
+      动作: 新增 1.2.1 条目，记录本轮三组实测编号、日期、结论与改动文件清单
+
+# =====================================================================
+六_验收标准:
+  - 三组实测每组都有终端日志或界面证据，结论是「生效/不生效/条件生效+条件」三选一
+  - amis-helper/ 下改动全部完成，无遗漏（对照第五节 10 项逐条打勾）
+  - 终检四项: 权威形态唯一性 / 编号连续无跳号 / **悬空引用 = 0** / 全文 CRLF
+  - 规则层行数 ≤800（落地后核算一次，报出实际数字）
+  - _amis-lab/schema.json 归档到 _amis-lab/schemas/ 下：v11-required.json / v12-close-reload.json / v10-button-reload.json
+  - README.md 的归档表格补 3 行
+
+# =====================================================================
+七_坑与注意:
+  - 数 crud 刷新次数时，页面加载本身会产生第一条 GET，必须**刷新页面重置计数**再测下一组
+  - 终端中文乱码：server.py 已强制 UTF-8，若仍乱码用 Windows Terminal
+  - amis SDK 分包：vendor/ 下 8 个文件缺一不可，缺 rest.js 会 404 且渲染不全（勿删）
+  - 改 amis-helper/ 前先把实测结论落到 docs/ 或本文件，避免实测与改动交叉污染
+  - git commit 中文 message 在 PowerShell 会 GBK 乱码 → 用 `git commit -F <UTF-8文件>`
+
+# =====================================================================
+八_输出格式:
+  ```yaml
+  实测结论:
+    V-11:
+      轮次1: <现象 + 终端证据>
+      轮次2: <...>
+      轮次3: <...>
+      轮次4: <...>
+      F-02定案: 冗余|保留|条件性建议
+      需新增P条目: [...]
+    V-12:
+      A组: <新增GET? 否>
+      B组: <...>
+      定案: 生效保留D-11|不生效删D-11
+    V-10:
+      A1: <...>
+      A2: <...>
+      B: <...>
+      C: <...>
+      B与C是否等价: 是|否
+      close是否影响reload: 是|否
+      D-12正文形态: 两列表格|一句话
+  落地改动:
+    - 文件:行 | 动作 | 是否已改
+  终检:
+    权威形态唯一性: PASS|FAIL
+    编号连续无跳号: PASS|FAIL
+    悬空引用: <数字>
+    全文CRLF: PASS|FAIL
+    规则层行数: <数字>
+  遗留问题:
+    - ...
+  ```

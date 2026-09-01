@@ -1,0 +1,429 @@
+# ============================================================
+# 外部 AI 评审提示词（可直接整份投喂）
+# 生成日期: 2026-09-01
+# 对象: amis-helper skill v1.2.0（amis 6.13.0 锚定）
+# 来源: 对 docs/review-external-in-260901.yml 外部评审的逐条核验 + 本地新发现
+# 用法: 全选复制 → 投喂给第二个 AI → 收回 YAML 结论
+# ============================================================
+
+角色: 你是 amis（百度开源低代码前端框架）资深专家 + AI Skill 工程评审专家
+任务: 对下列 5 个待决问题逐条定夺，输出可执行结论
+纪律: |
+  - 只依据 amis 6.13.0 的真实行为与工程常识作答，不要复述我的倾向
+  - 对每个问题必须给出「结论 + 理由 + 落地动作 + 信心度(高/中/低)」
+  - 若认为我给的选项都不对，直接给第三方案
+  - 无法确证的行为，明确标「需实测」并给出最小复现脚本
+  - 输出用 YAML，不要 Markdown 表格
+
+# ============================================================
+背景:
+
+  ## 1. 被评审对象
+  一个名为 amis-helper 的 AI Skill，用途：指导 AI 生成「可直接落地的 amis JSON Schema」
+  （后台管理 CRUD 页面）。文件结构：
+    SKILL.md(入口,60行) / META.md(元信息,60行) / CHANGELOG.md
+    references/crud.md, dialog-actions.md, form-controls.md, data-source.md,
+              pitfalls.md, self-check.md   (合计 487 行)
+    examples/6 个 .json + INDEX.md        (合计 445 行)
+
+  ## 2. 核心工程机制（请务必理解，5 个问题都与之相关）
+  SSOT 规则 ID 体系:
+    - 32 条权威规则，ID 前缀分域：
+      R-xx(跨域×1) C-xx(CRUD×8) D-xx(弹层动作×11) F-xx(表单×10) A-xx(接口×2)
+    - 组装铁律：一条规则**全文仅一处权威定义**，其余位置只引 ID，不重复写正文
+    - 每条权威规则必须带四要素元数据：`来源|状态|版本|违反后果`
+
+  可信度三级分级（META.md 定义）:
+    已实测:     在 amis 6.13.0 真实环境验证过，来源必须含 `V-x实测(日期)`
+    据官方文档: 有文档/issue 佐证，未单独实测
+    实战观察:   项目中踩坑总结，症状真实但机制未复现
+    迁移规范:   实战观察 --实测通过+补实测编号--> 已实测
+
+  已实测的 4 条（本机 _amis-lab，amis 6.13.0 SDK）:
+    D-01 弹层提交 close:false + submitSucc 手动 closeDialog      V-1-D实测(2026-08-31)
+    D-04 submit 按钮有内建 loading，配 loadingOn 是死配置        V-1/V-1-D实测
+    D-05 close:false 下 form api 的 reload 不生效，且不默认刷新  V-2实测
+    D-08 download 按钮必须 loadingOn+Service 变量+setValue 配对  V-3实测
+
+  ## 3. 硬约束
+    - 规则层（SKILL+META+references）预算上限 800 行，现状 607 行，v2.0 后预计 ~759
+      → 任何「全量展开」类方案请先算行数成本，超出就说超了
+    - SKILL.md 是渐进披露入口，靠「硬规则索引 + 触发矩阵 + examples 索引」指引 AI 按需读文件，
+      不是规则全文
+    - 环境：amis **6.13.0**，后台管理 CRUD 场景，手写 JSON Schema（非 amis-editor 可视化）
+
+# ============================================================
+已确认事实（我已逐条本地核验，无需你再查，直接采信即可）:
+  - self-check.md 共 33 个 checkbox，覆盖 32 个唯一规则 ID；C-02 出现两次（第 14 行、第 54 行）
+  - META.md「32 条权威规则」计数正确；错的是 CHANGELOG.md「6 组 32 条」的措辞
+  - SKILL.md §1 硬规则索引共 12 行、13 个 ID，覆盖率 13/32
+  - 编号无跳号：C-01~C-08、D-01~D-11、F-01~F-10、A-01~A-02、R-01、P-01~P-16 均连续
+  - crud.md §9 刷新机制表中，第 1 行与第 2 行都标了 `D-03`
+
+# ============================================================
+待决问题:
+
+  ## Q1【P0】F-02「必填双写」是不是一条误导性规则？
+
+  现状原文（references/form-controls.md §2 第 28 行，权威定义）:
+    - **`F-02`** 必填双写：`required: true`（显示红星）+ `validations: {"isRequired": true}`（拦截提交）
+      `来源:实战观察|状态:实战观察|版本:6.x|后果:只有红星不拦截，或只拦截无提示`
+
+  被传染的 2 处:
+    self-check.md:41
+      - [ ] 必填双写：`required: true` + `validations` 的 `isRequired`？→ `F-02`
+    examples/dialog-form-add.json:39-40:
+        "required": true,
+        "validations": { "isRequired": true },
+
+  争议: 按 amis 官方语义，`required: true` 本身就是校验属性——提交时应拦截并提示。
+        F-02 标的是「实战观察」，很可能是当年其他原因导致未拦截
+        （例如：按钮用的是 actionType:"ajax" 而非 submit，压根不走 form 校验链；
+        或字段在 combo 内；或值 falsy 但非空）。若判断有误，这是在教 AI 写冗余配置。
+
+  我的倾向: 大概率是误导性规则，但必须用最小复现实测定案，不靠推理。
+
+  请你回答:
+    1. amis 6.13.0 中，表单项 `required: true` 单独使用，是否会在 form 提交时拦截并提示？
+       请给出 amis-core 中对应的校验链路（required 如何进入 validations）
+    2. 是否存在 `required:true` 不拦截的已知场景？若有，逐一列出
+       （特别关注：select multiple 空数组、值为 0/false、字段在 combo/input-array 内、
+        按钮为 actionType:"ajax"、字段被 hiddenOn 隐藏、form 配了 initApi）
+    3. 给出最小复现 schema（我会在 _amis-lab 上跑）
+    4. 定夺 F-02 该怎么改：删除 / 降级为条件性建议 / 保留并升「已实测」
+
+  ## Q2【P1】未实测规则 D-11 该不该进入自检清单？
+
+  现状原文:
+    references/dialog-actions.md:45-46（权威定义）:
+      - **`D-11`** 弹层默认关闭模式（close 缺省）下 form api 的 `reload`（值为 crud 的 `name`）生效，
+        提交后自动刷新 CRUD；可用 `"reload": "none"` 显式关闭
+        `来源:官方文档(crud「增」章节)|状态:据官方文档,未实测|版本:6.x|
+         后果:行为未经本地实测，注意与 D-05（close:false 下相反）的边界`
+    同文件:39-40（D-05，已实测）:
+      - **`D-05`** `close: false` 下 form api 的 `reload` **不生效**、提交也不默认刷新 CRUD，
+        api 里**不要写 reload**；唯一写法是 `submitSucc` 显式 componentId reload
+        `来源:V-2实测(2026-08-31)|状态:已实测|版本:6.13.0|后果:表格不刷新`
+
+  被依赖的 2 处:
+    self-check.md:53
+      - [ ] 仅弹层默认关闭模式（close 缺省）才在 form api 写 `reload`…→ `D-11`
+    references/crud.md:107（刷新机制表最后一行）
+      | 弹层默认关闭模式（close 缺省） | form api 里加 "reload":"目标crud的name"；"reload":"none" 可关闭 | D-11 |
+
+  争议: D-11 与已实测的 D-05 是一对边界，共同撑起「刷新机制表」一半内容。
+        它标「据官方文档,未实测」，却进了自检清单——AI 自检时会拿一条猜的规则去判错。
+
+  我的倾向: 先补实测（V-12）再决定；若实测不生效，直接删 D-11，把 D-05 的适用范围
+        扩到「所有模式都不要在 form api 写 reload」，规则数 32→31，体系反而更简。
+
+  请你回答:
+    1. 从工程角度：一条「未实测」规则进入交付前自检清单，是否可接受？
+       若不可接受，正确的准入标准该怎么写（我要把它固化进 META.md）
+    2. 结合你对 amis 的了解，预判 D-11 的实测结果（生效 / 不生效 / 条件生效），并说明理由
+    3. 给出最小复现 schema 与判定方法
+
+  ## Q3【P1】`D-03` 一个 ID 承载两种相反语义，怎么拆？
+
+  现状原文:
+    references/dialog-actions.md:79（D-03 权威定义）:
+      - **`D-03`** 事件动作内 reload 必须用 `componentId`（`target` 失效），目标组件必须设 `id`
+        `来源:实战观察|状态:实战观察|版本:6.x|后果:reload 不生效`
+    同文件 §3 表格（第 71-77 行）:
+      | 位置 | 属性 | 说明 |
+      | 事件动作（onEvent.actions 内） | componentId | 匹配组件 id；**此处** target 不生效 |
+      | {"type":"action","actionType":"reload"} 按钮 | target | 值为组件 name，**官方支持的合法写法**，勿误判为错误 |
+      | form api 配置 | reload | 值为组件 name；仅默认关闭模式有效（D-11，未实测）；close:false 下不生效（D-05） |
+
+    references/crud.md:100-107 §9 刷新机制表（问题所在）:
+      | 场景 | 写法 | 规则 |
+      | 事件动作（onEvent.actions 内） | {"actionType":"reload","componentId":"..."} | D-03 |
+      | action 类型按钮 | {"type":"action","actionType":"reload","target":"crudName"}（官方合法写法） | D-03 |   ← 同一个 ID
+
+    examples/bulk-actions-picker.json:44-45（第三种写法，作者自认盲区）:
+        "close": true,
+        "reload": "mainCrud"
+      （这是 ajax 按钮**顶层**的 reload 属性，不是 form api 的 reload，也不是事件动作）
+    examples/INDEX.md:17-18（作者注记）:
+      bulk-actions-picker 的 "reload":"mainCrud" 是 ajax 按钮的 reload 属性（指向 name），
+      不属于 D-11（form api）/ D-03（事件动作）的适用场景，属规则盲区，v2.0 待补，勿套用
+
+  争议:
+    (a) D-03 的权威定义说「target 失效」，但 crud.md §9 第 2 行把「action 按钮用 target」
+        也归到 D-03——同一 ID 同时断言 target 合法与失效，AI 读到自相矛盾，是 SSOT 破口
+    (b) ajax 按钮顶层 reload 是第三种写法，现有 ID 体系无位置，示例里带着「勿套用」注记
+
+  我的倾向:
+    D-12 = action 按钮 reload 用 target（值为 name，官方合法，已可确认）
+    D-13 = ajax 按钮顶层 reload 属性（指向 name，待 V-10 实测确认）
+    注意：原 v2.0 计划已把 D-12 预留给「ajax 按钮 reload」，会撞号，需重排
+
+  请你回答:
+    1. amis 6.13.0 中，reload 到底有几种载体？请穷举（我目前识别出 4 种：
+       ① form api 内 reload  ② 事件动作 onEvent.actions 内
+       ③ action 按钮顶层 reload 属性  ④ api 配置项 reload
+       ——是否还有？每种的取值语义是 name 还是 id？）
+    2. ajax 按钮（actionType:"ajax"）顶层写 "reload":"crudName"，在 6.13.0 是否生效？
+       跨弹层边界（按钮在 dialog 内、crud 在 dialog 外）能否定位到？
+    3. 定夺编号方案：我的 D-12/D-13 拆分是否合理？
+       还是应该改用一个统一规则（如「reload 定位方式总表」）覆盖全部场景？
+       ——请从「AI 能否无歧义执行」的角度评判，而非从文档整洁度
+
+  ## Q4【P2】硬规则索引只覆盖 13/32，是补全还是改名？
+
+  现状原文（SKILL.md:12-25）:
+    ## 1. 硬规则索引（违反任意一条=返工，权威写法见指向处）
+    | ID | 一句话 | 权威定义 |
+    | R-01 | JSON 配置内禁止注释 | META.md |
+    | C-01 | perPageAvailable 放 crud 顶层 | references/crud.md §1 |
+    | C-04 | 统计条用 tpl 不用 statistics | references/crud.md §2 |
+    | D-03 | 事件动作 reload 用 componentId | references/dialog-actions.md §3 |
+    | D-01/D-04/D-06 | 弹层提交：close:false+submitSucc 关窗，禁 loadingOn/onEvent.submit | …§1 |
+    | D-02/D-08 | 下载导出只用 download，loadingOn+setValue 配对 | …§2 |
+    | F-03 | autoComplete 必须是对象 | references/form-controls.md §3 |
+    | F-05 | 上传 asBlob 与 form-data 成对 | …§5 |
+    | F-06 | 宽度只认 columnRatio | …§6 |
+    | A-02 | 非标准响应用 adaptor 转换 | references/data-source.md §2 |
+    未进索引的 19 条含：
+      C-02 C-03 C-05 C-06 C-07 C-08 D-05 D-07 D-09 D-10 D-11
+      F-01 F-02 F-04 F-07 F-08 F-09 F-10 A-01
+
+  争议: 标题「违反任意一条=返工」暗示这是全集，实际只有 13 条，
+        AI 会默认索引外的规则不重要（尤其 D-05 这种已实测的关键规则不在里面）。
+        但全量列 32 行会让 SKILL.md 从 60 行涨到 ~95 行，且违背渐进披露设计。
+
+  我的倾向: 改标题为「高频硬规则 TOP13（完整 32 条见 META.md 及各域文件）」，
+        不补全——保住 SKILL.md 的入口定位。
+
+  请你回答:
+    1. 从「AI 实际遵循率」角度：索引不全会不会真的导致 AI 漏规则？
+       （考虑到 AI 命中触发词后会读完整域文件，索引的作用究竟是什么）
+    2. 若应补全，如何在 ≤800 行预算内做到？给出具体压缩写法（如按域聚合一行）
+    3. 若改名，给一个不会削弱规则权威感的标题措辞
+
+  ## Q5【P2】自检清单 C-02 重复两次，改措辞还是删一项？
+
+  现状:
+    self-check.md 第 2 组（CRUD）第 14 行:
+      - [ ] crud 同时设了 `id` 和 `name`？→ `C-02`
+    self-check.md 第 6 组（刷新定位）第 54 行:
+      - [ ] 被 reload 的目标 crud 同时设了 `id` 和 `name`？→ `C-02`
+    CHANGELOG.md:10 声称「6 组 32 条」，实际 33 个 checkbox
+
+  附带问题: C-02 权威定义（crud.md:26）是无条件的：
+      - **`C-02`** crud 同时设 `id` 和 `name`
+    但 examples/bulk-actions-picker.json 的内层选择器 crud 既无 id 也无 name
+    （它不是 reload 目标，实践上没问题，但字面违反 C-02）
+
+  我的倾向:
+    (a) CHANGELOG 改措辞为「6 组 33 项（覆盖 32 条规则，C-02 跨组复检）」，
+        保留第 54 行——因为刷新场景下复检 id+name 有实际防错价值
+    (b) C-02 权威定义限定为「**被 reload 的** crud 才需同时设 id 和 name」
+
+  请你回答:
+    1. (a) 保留跨组复检 vs 严守 SSOT 一 ID 一项，哪个对 AI 执行更友好？
+    2. (b) 的限定是否会漏掉其他需要 id 或 name 的场景？
+       请穷举 amis 中「必须设 id」和「必须设 name」的场合
+
+# ============================================================
+# 以下为要求对方回传的结论模板（连同上方一起投喂）
+# ============================================================
+输出格式:
+  ```yaml
+  Q1:
+    结论: <一句话>
+    amis_校验链路: <required 如何进入 validations，关键源码位置>
+    不拦截的已知场景: [...]
+    最小复现_schema: |
+      {...}
+    落地动作:
+      - 文件:行 → 改成什么
+    信心度: 高|中|低
+    需实测确认: true|false
+  Q2:
+    结论: <一句话>
+    自检清单准入标准: <建议固化进 META.md 的措辞>
+    实测结果预判: 生效|不生效|条件生效
+    预判理由: <...>
+    最小复现_schema: |
+      {...}
+    落地动作:
+      - 文件:行 → 改成什么
+    信心度: 高|中|低
+  Q3:
+    结论: <一句话>
+    reload_载体穷举:
+      - 载体: <...>
+        取值语义: name|id
+        生效条件: <...>
+    ajax按钮顶层reload_是否生效: 生效|不生效|条件生效
+    跨弹层边界能否定位: 能|不能|待实测
+    编号方案: <D-12/D-13 拆分 or 统一规则，给理由>
+    落地动作:
+      - 文件:行 → 改成什么
+    信心度: 高|中|低
+  Q4:
+    结论: 补全|改名|其他
+    理由: <...>
+    具体写法: <补全则给压缩后的表格；改名则给标题措辞>
+    行数成本: <数字>
+    落地动作:
+      - 文件:行 → 改成什么
+    信心度: 高|中|低
+  Q5:
+    结论_a: 保留跨组复检|严守一项一ID
+    结论_b: C-02 限定为被reload目标|维持无条件|其他
+    必须设id的场合: [...]
+    必须设name的场合: [...]
+    落地动作:
+      - 文件:行 → 改成什么
+    信心度: 高|中|低
+  全局补充建议:   # 我发现但你没问到的问题
+    - ...
+  ```
+
+# ============================================================
+# 评审结论（外部 AI 定夺）
+# 生成日期: 2026-09-01
+# 依据: amis 官方文档 action.md/form.md + amis-core@6.13.0 构建产物源码
+#       (esm/store/formItem.js, esm/store/form.js, esm/utils/validations.js) + 项目现状逐条核实
+# 状态: 结论已定；需 _amis-lab 实测项已标注 V-x
+# ============================================================
+
+Q1:
+  结论: F-02 必填双写是冗余教法，应改为「required 单独即可」，删除双写写法
+  源码证据:
+    - store/formItem.js config(): rules.isRequired = required || rules.isRequired
+      → required:true 自动并入 isRequired，双写幂等、无任何增强
+    - utils/validations.js isRequired: value!==undefined && value!=='' && value!==null
+      && (!Array.isArray(value) || !!value.length)
+      → 拦截: undefined/null/''/空数组[]；放行: 0、false；全空格串 ' ' 不拦截
+    - store/form.js getItems(): 不排除 hidden/visible=false 字段，全部参与校验
+    - store/formItem.js validate(): 无 disabled 跳过逻辑，禁用字段仍校验
+  required单独_是否拦截: 是，与 validations.isRequired 完全等价（拦截+红星提示）
+  不拦截_已知场景:
+    - 按钮 actionType:"ajax" 提交不走 form 校验链，required 完全失效（F-02 最可能起源）
+    - 值 0 / false：isRequired 显式放行
+    - 值 ' '（全空格）：只排除 ''，不拦截
+    - combo/input-table 行内字段：整体提交时行级 required 不校验（官方 issue#9537）
+    - 隐藏字段值清空时反向「误拦截」：字段不可见仍报必填
+  最小复现_schema: |
+    { "type":"page", "body":[ { "type":"form", "api":"/api/mock2/form/saveForm", "body":[
+      { "type":"input-text", "name":"a", "label":"A仅required", "required":true },
+      { "type":"input-text", "name":"b", "label":"B仅validations", "validations":{"isRequired":true} },
+      { "type":"input-number", "name":"c", "label":"C值0", "required":true },
+      { "type":"select", "name":"d", "label":"D空数组", "multiple":true, "required":true, "options":[{"label":"x","value":"x"}] },
+      { "type":"button", "label":"E ajax提交", "actionType":"ajax", "api":"/api/mock2/form/saveForm" }
+    ], "actions":[ { "type":"button","label":"Submit","actionType":"submit" } ] } ] }
+  判定: A/B 空值提交均拦截且提示→required 单独有效、双写冗余；C 填 0 放行、D 空数组拦截；E 点击直接发请求不校验
+  落地动作:
+    - references/form-controls.md:28 → F-02 改「必填: required:true 单独即可，勿双写 validations.isRequired；不拦截: ajax 按钮提交 / 0与false 视为有值」，来源升「官方文档+源码(V-x实测)」
+    - references/self-check.md:41 → 改「必填字段配了 required:true（无需双写 isRequired）？」
+    - examples/dialog-form-add.json:39-40 → 删 "validations":{"isRequired":true} 一行
+  信心度: 高
+  需实测确认: true（V-11 仅需确认 ajax 按钮跳过校验链；其余已有源码证据）
+
+Q2:
+  结论: 未实测且边界模糊的规则不得进交付前自检清单；D-11 先补 V-12 实测再定保留/删除
+  自检清单准入标准: |
+    固化进 META.md：自检清单条目最低门槛 = 「已实测(V-x)」或「据官方文档且行为无歧义（无边界/无反例）」；
+    未实测或边界有歧义者不得入清单——先实测再入，或降级为 pitfalls 排障条目/文档注记
+  实测结果预判: 生效
+  预判理由:
+    - 官方文档 action.md 明确 reload「操作完后刷新目标组件(name)」，close 缺省是 reload 设计主路径
+    - V-2 实测 close:false 失效，恰好反证 close 是分界变量 → 默认关闭模式应生效
+    - 但 D-05 已有反例，空口无凭，必须 V-12 定案
+  最小复现_schema: |
+    { "type":"page", "body":[
+      { "type":"crud", "name":"mainCrud", "api":"/api/mock2/sample", "columns":[{"name":"id","label":"ID"}] },
+      { "type":"button", "label":"新增(close缺省)", "actionType":"dialog", "dialog":{
+        "title":"add", "body":{ "type":"form",
+          "api":{"method":"post","url":"/api/mock2/form/saveForm","reload":"mainCrud"},
+          "body":[{"type":"input-text","name":"x","label":"x"}] },
+        "actions":[{"type":"button","label":"提交","actionType":"submit"}] } }
+    ]}
+  判定: 提交后终端出现新 GET /api/mock2/sample → D-11 生效保留；无 → 删 D-11、D-05 扩「所有模式不写 reload」，规则数 32→31
+  落地动作:
+    - references/self-check.md:53 → V-12 前删除该行或标「待实测勿据此判错」；实测后按结果恢复/删除
+    - META.md 新增「自检清单准入标准」小节（措辞见上）
+    - 实测生效则 references/dialog-actions.md:45 D-11 来源补「V-12实测(日期)」
+  信心度: 中
+  需实测确认: true（V-12）
+
+Q3:
+  结论: 采用「reload 载体总表 + 一域一 ID」；新增 D-12=按钮级 reload（合并 target 与顶层 reload 两种按钮写法），无需 D-13
+  reload_载体穷举:
+    - 载体: 事件动作 onEvent.actions 内 {"actionType":"reload"}
+      取值语义: id（componentId，官方 YaoDocs 佐证 target 无效）
+      生效条件: 事件触发立即执行 → D-03
+    - 载体: action 按钮顶层 "reload" 属性（所有 actionType 通用，含 ajax）
+      取值语义: name
+      生效条件: 操作完成后自动刷新（官方 action.md 原文示例即 ajax+reload）→ D-12
+    - 载体: actionType:"reload" 按钮 + "target"
+      取值语义: name
+      生效条件: 点击立即刷新目标 → D-12
+    - 载体: form api 内 "reload"
+      取值语义: name
+      生效条件: 仅默认关闭模式（D-11，待 V-12）；close:false 失效（D-05）→ D-11
+    - 载体: 通用 api 对象内 "reload"（非 form 场景）
+      取值语义: name
+      生效条件: 请求成功后刷新，与 form api 同机制，文档统一表述
+  ajax按钮顶层reload_是否生效: 生效（官方文档原文示例 actionType:"ajax" + reload:"crud"）
+  跨弹层边界能否定位: 能（官方「弹框结合 reload 刷新下拉框」即跨层示例，name 沿作用域链向上冒泡）
+  编号方案: 合并为单一 D-12「按钮级 reload」，不拆 D-13。理由：
+    - 两种按钮写法取值语义相同(name)、时机相同(按钮操作后)、机制相同 → 一 ID 即可，AI 记忆成本最低
+    - 与 v2.0-plan 预留的 D-12（ajax 按钮 reload）正好同名同义，天然不撞号
+    - reload 三分边界清晰：事件动作(D-03,id) / 按钮级(D-12,name) / form api(D-11,name)
+  落地动作:
+    - references/dialog-actions.md §3 → 表更新：target 与顶层 reload 归 D-12；D-03 保持事件动作 componentId
+    - references/dialog-actions.md 新增 D-12 权威定义（四要素：来源官方文档 action.md | 状态据官方文档 | 版本6.x | 后果 reload 不生效）
+    - references/crud.md:105 → 刷新机制表第 2 行 D-03 改 D-12
+    - examples/INDEX.md:17-18 → 盲区注记改「属 D-12（按钮级 reload，指向 name）」，bulk-actions-picker 覆盖列补 D-12
+    - references/self-check.md:29 → D-03 行措辞收窄为「事件动作 reload 用 componentId」，按钮 target/顶层 reload 引 D-12
+    - docs/plan-v2.0.yaml 批次 B D-12 内容与本次一致，无需改号
+  信心度: 高
+  需实测确认: true（V-10 复核跨弹层定位，虽有官方示例为证）
+
+Q4:
+  结论: 改名，不补全（保住 SKILL.md 渐进披露入口与行数预算）
+  理由:
+    - 索引作用是「高频提醒+指向」而非全集；AI 命中触发词后必读完整域文件，索引缺失不影响规则执行
+    - 全量 32 行稀释高频规则注意力，SKILL.md 60→95 行违背渐进披露设计
+    - 规则层 759 行距 800 上限仅余 41 行，补全成本不划算
+  具体写法: 标题改「硬规则索引（高频 TOP13，非全集；完整 32 条见 META.md / references/ 各域，交付前必跑 self-check 全量核对）」
+  可选微调: 补一行 D-05（已实测关键规则）至 TOP14，+1 行
+  行数成本: 0（仅改名）或 +1（补 D-05）
+  落地动作:
+    - SKILL.md:12 → 改标题措辞（见上）
+    - 可选 SKILL.md §1 → 增 D-05 行
+  信心度: 高
+  需实测确认: false
+
+Q5:
+  结论_a: 保留跨组复检（C-02 两处均留，CHANGELOG 改措辞）
+  结论_a理由: 自检清单是「按场景核对」，同规则跨场景复检有实际防错价值；SSOT 一 ID 一项约束的是权威定义唯一，不是自检点唯一
+  结论_b: C-02 限定为「被外部定位/刷新的 crud」
+  必须设id的场合:
+    - 事件动作 componentId 的目标（onEvent.actions: reload/setValue/show/hide）
+    - submitSucc 显式 reload 的目标（D-05）
+    - Service 包层被 setValue 定位（D-09）
+  必须设name的场合:
+    - actionType:"reload" 按钮 target / 按钮顶层 reload 的目标（D-12）
+    - form api reload 的目标（D-11）
+    - 外部跳转或其他组件联动引用的组件
+  结论_b理由: 被 reload 的 crud 可能同时被两种载体定位（componentId 与 target），双设 id+name 是防御性最优；
+    无需被定位的 crud（如 bulk-actions-picker 内层选择器）不受限，消除示例字面违规
+  落地动作:
+    - CHANGELOG.md:10 → 「6 组 33 项（覆盖 32 条规则，C-02 跨组复检）」
+    - references/crud.md:26 → C-02 限定「被外部定位/刷新的 crud 才需同时设 id+name」
+    - META.md 补「自检清单允许跨组复检；一 ID 一项约束权威定义不约束自检点」
+    - examples/INDEX.md → bulk-actions-picker 内层 crud 补注「非 reload 目标，符合 C-02 限定」
+  信心度: 高
+  需实测确认: false
+
+全局补充建议:
+  - META.md 规则计数 32→33（新增 D-12），CHANGELOG 同步
+  - F-02 修复后来源升「已实测」，压降「实战观察」占比（当前多数规则未实测，可信度分布不健康）
+  - 「api 配置项 reload」与「form api reload」实为同一机制，data-source.md 统一表述防 AI 混淆
+  - 将「自检清单准入标准」+「reload 载体总表」固化进 META.md，防 v2.x 回归
+  - 预算核对：规则层 607→~760（D-12 约 +8，可选 D-05 +1），≤800 达标；示例层不受影响

@@ -1,0 +1,84 @@
+{
+  "type": "page",
+  "title": "V-4 dialog 内 download loading 验证",
+  "body": [
+    {
+      "type": "alert",
+      "level": "info",
+      "body": "验证：dialog 弹层内的 download 按钮，loadingOn 读外层 Service 变量 + setValue 指向外层 Service 是否生效。操作：点「G组：打开 Import 弹层」→ 点弹层内「Download Template」按钮，观察按钮是否转圈 3 秒（接口延迟 3 秒）。对照组是 dialog 外的 download 按钮（V-3 已证）。",
+      "className": "mb-3"
+    },
+    {
+      "type": "service",
+      "id": "pageStateService",
+      "data": {
+        "templateDownloading": false,
+        "exportDownloading": false
+      },
+      "body": [
+        {
+          "type": "tpl",
+          "tpl": "templateDownloading = <b>${templateDownloading}</b> ｜ exportDownloading = <b>${exportDownloading}</b>"
+        },
+        { "type": "divider" },
+        {
+          "type": "button",
+          "label": "G组：打开 Import 弹层",
+          "level": "primary",
+          "className": "mb-2",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "Import",
+            "body": {
+              "type": "form",
+              "body": [
+                {
+                  "type": "alert",
+                  "level": "warning",
+                  "body": "点下面的「Download Template」按钮（接口延迟 3 秒），观察按钮是否转圈。"
+                },
+                {
+                  "type": "button",
+                  "label": "Download Template",
+                  "level": "link",
+                  "icon": "fa fa-download",
+                  "loadingOn": "${templateDownloading}",
+                  "onEvent": {
+                    "click": {
+                      "actions": [
+                        { "actionType": "setValue", "componentId": "pageStateService", "args": { "value": { "templateDownloading": true } } },
+                        { "actionType": "download", "args": { "api": { "method": "get", "url": "/api/mock2/sample?waitSeconds=3" } } },
+                        { "actionType": "setValue", "componentId": "pageStateService", "args": { "value": { "templateDownloading": false } } }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        { "type": "divider" },
+        {
+          "type": "tpl",
+          "tpl": "<div style='color:#999;margin-bottom:8px'>对照组：dialog 外的 download 按钮（V-3 已证 loadingOn + setValue 生效）</div>"
+        },
+        {
+          "type": "button",
+          "label": "对照组：dialog 外 download",
+          "level": "warning",
+          "icon": "fa fa-download",
+          "loadingOn": "${exportDownloading}",
+          "onEvent": {
+            "click": {
+              "actions": [
+                { "actionType": "setValue", "componentId": "pageStateService", "args": { "value": { "exportDownloading": true } } },
+                { "actionType": "download", "args": { "api": { "method": "get", "url": "/api/mock2/sample?waitSeconds=3" } } },
+                { "actionType": "setValue", "componentId": "pageStateService", "args": { "value": { "exportDownloading": false } } }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -23,7 +23,7 @@
 
 - **`C-01`** `perPageAvailable` 必须放 crud **顶层**，不能放 footerToolbar 内组件里
   `来源:amis-ui BasicPaginationProps 接口定义+官方issue#6685|状态:据官方文档|版本:6.x|后果:切换器不出现`
-- **`C-02`** crud 同时设 `id` 和 `name`：`id` 供事件动作 componentId 定位，`name` 供按钮 target / api.reload 定位
+- **`C-02`** **被外部定位 / 刷新的** crud 同时设 `id` 和 `name`：`id` 供事件动作 componentId 定位，`name` 供按钮 target / 按钮顶层 reload / form api reload 定位；无需被定位的 crud（如弹层内选择器）不必设
   `来源:实战观察|状态:实战观察|版本:6.x|后果:reload 定位不到目标`
 - **`C-03`** `syncLocation: false`，避免分页参数污染 URL
   `来源:实战观察|状态:实战观察|版本:6.x|后果:刷新/分享链接携带分页参数`

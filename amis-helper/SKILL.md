@@ -9,16 +9,17 @@ disable: false
 # amis-helper Skill
 
 规则全文以 ID 权威定义为准（META.md + references/），本文件只做索引。适用边界：仅 JSON Schema 手写生成，不适用于 amis-editor 可视化 / amis 2.x / 移动端 H5，详见 META.md。
-## 1. 硬规则索引（违反任意一条=返工，权威写法见指向处）
+## 1. 硬规则索引（高频 TOP14，非全集；完整 32 条见 META.md / references/ 各域文件，交付前必跑 self-check 全量核对）
 
 | ID | 一句话 | 权威定义 |
 |---|---|---|
 | R-01 | JSON 配置内禁止注释 | META.md |
 | C-01 | perPageAvailable 放 crud 顶层 | references/crud.md §1 |
 | C-04 | 统计条用 tpl 不用 statistics | references/crud.md §2 |
-| D-03 | 事件动作 reload 用 componentId | references/dialog-actions.md §3 |
 | D-01/D-04/D-06 | 弹层提交：close:false+submitSucc 关窗，禁 loadingOn/onEvent.submit | references/dialog-actions.md §1 |
+| D-05 | close:false 下 form api 内禁写 reload，刷新靠 submitSucc 显式 componentId reload | references/dialog-actions.md §1 |
 | D-02/D-08 | 下载导出只用 download，loadingOn+setValue 配对 | references/dialog-actions.md §2 |
+| D-03 | 事件动作 reload 用 componentId | references/dialog-actions.md §3 |
 | F-03 | autoComplete 必须是对象 | references/form-controls.md §3 |
 | F-05 | 上传 asBlob 与 form-data 成对 | references/form-controls.md §5 |
 | F-06 | 宽度只认 columnRatio | references/form-controls.md §6 |

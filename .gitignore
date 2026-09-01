@@ -6,3 +6,9 @@ _amis-lab/vendor/
 
 # CodeBuddy 工作数据
 .codebuddy/
+
+# amis 实验室运行日志
+_amis-lab/*.err
+
+# 浏览器自动化工具缓存
+.playwright-cli/
