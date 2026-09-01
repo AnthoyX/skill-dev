@@ -2,7 +2,7 @@
 date: 2026-08-31
 对象: amis-helper v1.2 批次 4 落地方案
 范围: examples/self-check.md 拟建方案 + META.md 第 56 行小改 + SSOT 终检脚本设计（文件未创建，仅评方案）
-基准: docs/amis-helper-iteration-plan.md（§4.1 目录树 / §4.4 体量预算 / §5.2 任务 1.2.5 / §6.2 自检清单设计）
+基准: docs/plan-iteration.md（§4.1 目录树 / §4.4 体量预算 / §5.2 任务 1.2.5 / §6.2 自检清单设计）
 结论: 不可直接落地（2 处硬错误 + 3 处修改 + 终检脚本 2 缺口），改完即通过
 ---
 

@@ -4,7 +4,7 @@
 |---|---|
 | 评审对象 | `amis-helper` v1.2 批次 2（pitfalls 引用化 + SKILL.md 索引化） |
 | 审查文件 | `references/pitfalls.md` / `SKILL.md` |
-| 评审基准 | `docs/amis-helper-iteration-plan.md`（§5.2 的 1.2.2 / 1.2.3 / 1.2.6、§4.4、§6.3） |
+| 评审基准 | `docs/plan-iteration.md`（§5.2 的 1.2.2 / 1.2.3 / 1.2.6、§4.4、§6.3） |
 | 审查方式 | 全文通读 2 文件 + 5 权威文件 + `git diff` 核对改动范围/未动项 + 字节级 CRLF 检查 |
 | 评审日期 | 2026-08-31 |
 | 结论 | **放行**（阻塞级 0 项） |

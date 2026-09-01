@@ -2,7 +2,7 @@
 date: 2026-08-31
 对象: amis-helper v1.2 批次 4 落地改动（第二轮复审）
 范围: references/self-check.md（新建 54 行）+ META.md L56 + SKILL.md §3 触发矩阵 +1 行
-依据: 首轮评审 docs/amis-helper-v1.2-batch4-review.md + 迭代计划 §4.4/§5.2/§6.2 + 首轮输入 batch4-review-points.yaml
+依据: 首轮评审 docs/review-batch4.md + 迭代计划 §4.4/§5.2/§6.2 + 首轮输入 review-batch4-input.yaml
 结论: 放行，0 阻塞，2 处建议修改（不阻塞）
 ---
 
