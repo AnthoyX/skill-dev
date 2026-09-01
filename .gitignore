@@ -9,6 +9,7 @@ _amis-lab/vendor/
 
 # amis 实验室运行日志
 _amis-lab/*.err
+_amis-lab/*.log
 
 # 浏览器自动化工具缓存
 .playwright-cli/

@@ -43,7 +43,7 @@
 - **`D-07`** 确认弹层用 `actionType:"dialog"` 自定义弹框，不用 `confirmText`
   `来源:实战观察|状态:实战观察|版本:6.x|后果:原生框无法 loading、无法展示复杂提示`
 - **`D-11`** 弹层默认关闭模式（close 缺省）下 form api 的 `reload`（值为 crud 的 `name`）生效，提交后自动刷新 CRUD；可用 `"reload": "none"` 显式关闭
-  `来源:官方文档(crud「增」章节)|状态:据官方文档,未实测|版本:6.x|后果:行为未经本地实测，注意与 D-05（close:false 下相反）的边界`
+  `来源:官方文档(crud「增」章节)+V-12实测(2026-09-01)|状态:已实测|版本:6.13.0|后果:close 缺省模式下不写 reload 则不刷新；与 D-05（close:false 下不生效）形成对偶边界`
 
 ## §2 下载/导出（唯一正确写法）
 
@@ -68,16 +68,20 @@
 - **`D-08`** download 按钮**必须** `loadingOn` + 外层 Service 变量 + `setValue true/false` 配对（download 无内建 loading）；实测顺序 action 会**等待下载完成**（waitSeconds=3 → loading 持续 3 秒）
   `来源:V-3实测(2026-08-31)|状态:已实测|版本:6.13.0|后果:点击无反馈，用户重复点击`
 
-## §3 reload 定位方式（`D-03` 详情）
+## §3 reload 定位方式（三分）
 
-| 位置 | 属性 | 说明 |
-|------|------|------|
-| 事件动作（`onEvent.actions` 内） | `componentId` | 匹配组件 `id`；**此处** `target` 不生效 |
-| `{"type":"action","actionType":"reload"}` 按钮 | `target` | 值为组件 `name`，**官方支持的合法写法**，勿误判为错误 |
-| form api 配置 | `reload` | 值为组件 `name`；仅默认关闭模式有效（`D-11`，未实测）；`close:false` 下不生效（`D-05`） |
+| 载体 | 属性 | 值 | 规则 |
+|------|------|------|------|
+| 事件动作（`onEvent.actions` 内） | `componentId` | 目标组件 `id` | `D-03`（此处 `target` 失效） |
+| 按钮级（刷新专用按钮 / 业务按钮） | `target` 或顶层 `reload` | 目标组件 `name` | `D-12`（见下，两形态） |
+| form api 配置 | `reload` | 目标组件 `name` | `D-11`（仅 close 缺省生效）/ `D-05`（close:false 不生效） |
 
 - **`D-03`** 事件动作内 reload 必须用 `componentId`（`target` 失效），目标组件必须设 `id`
   `来源:实战观察|状态:实战观察|版本:6.x|后果:reload 不生效`
+- **`D-12`** 按钮级 reload，按按钮类型分两形态（V-10 实测）:
+  - 刷新专用按钮（`actionType:"reload"`）→ **必须用 `target`**（值 name）；写顶层 `reload` 属性（无 target）**不生效**
+  - 业务按钮（`actionType:"ajax"`/`"submit"` 等）→ 用顶层 `reload` 属性（值 name），操作完成后刷新；`close` 不影响其生效
+  `来源:官方文档(action.md)+V-10实测(2026-09-01)|状态:已实测|版本:6.13.0|后果:reload 不生效`
 - 被刷新 crud 同时设 `id` 和 `name` → references/crud.md §1（`C-02`）
 
 ## §4 Service 包装层（仅无内建 loading 的按钮需要）

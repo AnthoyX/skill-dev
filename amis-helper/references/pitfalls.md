@@ -57,3 +57,9 @@
 
 ### P-16 amis Schema 校验报「JSON 中不允许有注释」
 - 错误：配置内含 `//` 或 `/* */` → 见 META.md（`R-01`）
+
+### P-17 隐藏/不可见的必填字段导致提交被拦截
+- 实测（V-11 轮次4，2026-09-01）：hidden/visible:false 的 required 字段值空时仍参与校验，提交被拦截图弹「依赖的部分字段没有通过验证」 → 见 references/form-controls.md §2（`F-02`）
+
+### P-18 combo / input-table 行内必填不校验
+- 据 amis 官方 issue#9537（未实测）：combo/input-table 行内字段的 required 在整体提交时不触发校验 → 见 references/form-controls.md §2（`F-02`）

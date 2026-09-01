@@ -11,11 +11,11 @@
 | dialog-form-add.json | 新增弹层 | mainCrud.id | D-01, D-04, D-05, F-02, F-03, F-04 | 57 |
 | dialog-form-edit.json | 编辑弹层（static + hidden） | mainCrud.id + 行上下文 ${code}/${name}/${id} | D-01, D-04, D-05, F-08 | 41 |
 | dialog-confirm-loading.json | 危险操作确认弹层 | mainCrud.id + 行上下文 ${code}/${id} | D-01, D-04, D-05, D-07 | 41 |
-| bulk-actions-picker.json | 弹层内数据选择器（loadDataOnce + bulkActions） | mainCrud.name + 行上下文 ${groupCode}/${groupId} | D-10, A-02 | 59 |
+| bulk-actions-picker.json | 弹层内数据选择器（loadDataOnce + bulkActions） | mainCrud.name + 行上下文 ${groupCode}/${groupId} | D-10, D-12, A-02 | 59 |
 
 注：
-- bulk-actions-picker 的 `"reload": "mainCrud"` 是 ajax 按钮的 reload 属性（指向 name），
-  不属于 D-11（form api）/ D-03（事件动作）的适用场景，属规则盲区，v2.0 待补，勿套用
+- bulk-actions-picker 的 `"reload": "mainCrud"` 是 ajax 按钮的顶层 reload 属性（指向 name），
+  属 `D-12`（业务按钮顶层 reload，操作完成后刷新）；内层 crud 非 reload 目标，符合 `C-02` 限定
 - dialog-import 模板下载按钮已按 D-08 补 loadingOn 三件套，机制已实测生效
   （dialog 内 setValue componentId 可定位外层 Service）；button loading 视觉在 6.13.0 SDK 下待复核
 

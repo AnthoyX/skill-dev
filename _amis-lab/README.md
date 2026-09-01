@@ -56,6 +56,9 @@ copy schemas\v3-download-timing.json schema.json
 |---|---|
 | `v3-download-timing.json` | V-3：download action 是否等待下载完成 |
 | `v1v2-loading-and-reload.json` | V-1 弹层 loading 变量能否生效 + V-2 `close:false` 下 `api.reload` 是否生效 |
+| `v11-required.json` | V-11：required 校验链（required 与 isRequired 等价、0/全空格边界、ajax 跳过提交阻断、隐藏必填误拦截） |
+| `v12-close-reload.json` | V-12：close 缺省 vs close:false 下 form api reload 是否生效（D-11 存废） |
+| `v10-button-reload.json` | V-10：按钮级 reload 两形态（刷新专用按钮 target / 业务按钮顶层 reload） |
 
 > `schema.json` 里接口地址写相对路径 `/api/mock2/sample`，和 amis 文档站的写法一致，
 > 验证通过后可直接搬到真实项目，不用改。

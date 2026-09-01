@@ -97,11 +97,12 @@ filter 字段自动进入 crud 数据域，api.data 用 `${字段名}` 引用；
 
 小数据量（全量字典/配置类列表）用 `"loadDataOnce": true`：首次请求拉全量，后续分页/排序在前端完成。弹层内嵌选择器常用 → examples/bulk-actions-picker.json（`D-10`）。
 
-## §9 刷新机制（权威定义在弹层域 D-03/D-05/D-11）
+## §9 刷新机制（权威定义在弹层域 D-03/D-05/D-11/D-12）
 
 | 场景 | 写法 | 规则 |
 |------|------|------|
 | 事件动作（onEvent.actions 内） | `{"actionType":"reload","componentId":"..."}` | `D-03` |
-| action 类型按钮 | `{"type":"action","actionType":"reload","target":"crudName"}`（官方合法写法） | `D-03` |
+| 刷新专用按钮（actionType:reload） | `{"type":"action","actionType":"reload","target":"crudName"}`（官方合法写法） | `D-12` |
+| 业务按钮（ajax/submit 等）顶层 reload | `{"actionType":"ajax","reload":"crudName",...}`（值 name，操作完成后刷新） | `D-12` |
 | close:false 弹层提交 | submitSucc 显式 componentId reload（**唯一**写法） | `D-05` |
 | 弹层默认关闭模式（close 缺省） | form api 里加 `"reload": "目标crud的name"`；`"reload":"none"` 可关闭 | `D-11` |

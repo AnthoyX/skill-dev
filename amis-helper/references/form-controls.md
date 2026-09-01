@@ -25,8 +25,14 @@
 
 ## §2 必填与校验
 
-- **`F-02`** 必填双写：`required: true`（显示红星）+ `validations: {"isRequired": true}`（拦截提交）
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:只有红星不拦截，或只拦截无提示`
+- **`F-02`** 必填只写 `required: true`，**勿双写** `validations: {"isRequired": true}`（幂等无增强，双写唯一差异是多一颗红星，无功能价值）
+  `来源:官方文档+amis-core源码+V-11实测(2026-09-01)|状态:已实测|版本:6.13.0|后果:冗余配置，误导读者以为 required 不拦截`
+  不拦截的已知场景（实测边界）:
+    - ajax 按钮提交跳过「提交前校验阻断」，必填为空仍发请求（F-02 起源；input 的 onChange 实时红字是副作用，非提交阻断）
+    - 值 0 / false 视为有值放行
+  仍拦截的边界（实测修正源码推断）:
+    - 全空格串 ' ' 被拦截（源码推断「不拦截」，实测相反，疑似 required 链对字符串 trim）
+    - hidden / visible:false 字段仍参与校验，值空时误拦截 → P-17
 - 邮箱：`"validations": {"isEmail": true}` + `"validateOnChange": true`；远程唯一性：`"validateApi": "/XXX/XXXX/validate?mail=${email}"`；textarea 长度：`"maxLength": 200`
 
 ## §3 远程联想 select（autoComplete）

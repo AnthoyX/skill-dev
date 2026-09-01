@@ -26,7 +26,8 @@
 - [ ] `close: false` 下 form api 内**未写** `reload`，刷新靠 `submitSucc` 显式 `componentId` reload？→ `D-05`
 - [ ] form 未配 `onEvent.submit`？→ `D-06`
 - [ ] 确认操作用 `actionType: "dialog"` 自定义弹层，未用 `confirmText`？→ `D-07`
-- [ ] 事件动作（onEvent.actions）内 reload 用 `componentId`（target 仅 `{"type":"action"}` 按钮合法）？→ `D-03`
+- [ ] 事件动作（onEvent.actions）内 reload 用 `componentId`（此处 target 失效）？→ `D-03`
+- [ ] 按钮级 reload：刷新专用按钮（actionType:reload）用 `target`、业务按钮（ajax 等）用顶层 `reload` 属性（值均为 name）？→ `D-12`
 - [ ] 弹层内选择数据用 crud `loadDataOnce: true` + `bulkActions`，提交用 `${selectedItems|pick:字段}`，空选已 `disabledOn` 禁用？→ `D-10`
 
 ## 4. 下载 / 导出（loading 要求与弹层提交相反）
@@ -38,7 +39,7 @@
 ## 5. 表单控件
 
 - [ ] 多选 select 带齐 `multiple` + `extractValue` + `joinValues` + `delimiter`？→ `F-01`
-- [ ] 必填双写：`required: true` + `validations` 的 `isRequired`？→ `F-02`
+- [ ] 必填字段配了 `required: true`（无需双写 `validations.isRequired`）？→ `F-02`
 - [ ] `autoComplete` 是对象（method/url/sendOn 都在内），非 `true` + 外部 source？→ `F-03`
 - [ ] `sendOn` 在 autoComplete 对象内，未放进 source？→ `F-04`
 - [ ] `asBlob: true` 与 api 的 `dataType: "form-data"` 成对出现？→ `F-05`
@@ -50,5 +51,5 @@
 
 ## 6. 刷新定位
 
-- [ ] 【`D-11` 待实测 V-12，**勿据此判错**】当前一律按 `D-05`：form api 内不写 `reload`，刷新靠 `submitSucc` 显式 `componentId` reload
+- [ ] 弹层默认关闭模式（close 缺省）下 form api 的 `reload`（值 name）生效？→ `D-11`（close:false 下不生效，见 `D-05`）
 - [ ] 被 reload 的目标 crud 同时设了 `id` 和 `name`？→ `C-02`

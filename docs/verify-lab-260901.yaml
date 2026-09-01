@@ -1,0 +1,95 @@
+# =====================================================================
+# amis-helper v1.2 收尾实测结论（V-10 / V-11 / V-12）
+# 生成日期: 2026-09-01
+# 环境: _amis-lab（amis 6.13.0 SDK），mock 终端毫秒级日志
+# 前置: docs/plan-lab-handoff-260901.yaml（482 行交接提示词）
+# =====================================================================
+
+实测结论:
+  V-11_required校验链:
+    轮次1_全空提交:
+      现象: A/B/C/D/E 五个字段均出现「这是必填项」红字提示
+      终端: 无 POST
+      结论: required:true 单独有效、与 validations.isRequired 完全等价（拦截+红星）
+      注: A/C/D/E 标签带红星（required 触发），B 无红星（仅 validations 不显示红星）→ 双写唯一差异是红星，无功能增强
+    轮次2_C填0_E填空格:
+      现象: C（input-number 填 0）放行无报错；E（input-text 填一个空格 ' '）仍报必填
+      终端: 无 POST（因 E 校验未过）
+      结论_0放行: 是，0 被视为有值（与源码一致）
+      结论_全空格: 拦截——与外部评审源码推断「value!=='' 即放行，全空格不拦截」相反
+      修正: F-02 边界按实测写「全空格串被拦截」，不写「全空格放行」；机制未深究（疑似 amis 6.13.0 required 链对字符串做了 trim）
+    轮次2b_E改正常值:
+      现象: E 改填 'x' 后五字段全放行
+      终端: 23:37:39 POST /api/mock2/form/saveForm（waitSeconds=1），23:37:40 响应
+      结论: 整链通过 + C=0 真放行确证
+    轮次3_清空A点ajax:
+      现象: A 清空后点 ajax 提交按钮，A 下出现「这是必填项」红字
+      终端: 23:37:58 POST 照发（saveForm），23:37:59 响应
+      结论: ajax 按钮在必填字段为空时仍发出请求 → 跳过「提交前校验阻断」，F-02 起源确证
+      修正: A 的红字是 input 的 onChange 实时校验副作用，不是提交校验阻断；F-02 表述须精确为「ajax 按钮跳过提交前校验阻断，直接发请求」（勿写「无校验提示」）
+    轮次4_隐藏必填:
+      现象: 点 formHidden 提交，弹 toast「依赖的部分字段没有通过验证」
+      终端: 无 POST
+      结论: hidden 必填字段 F 仍参与校验并误拦截 → P-17 成立
+    F-02定案: 冗余（required:true 单独即可），双写唯一差异是红星无功能增强
+    需新增P条目:
+      - P-17 隐藏/不可见的必填字段导致提交被拦截（轮次4 实证）
+      - P-18 combo/input-table 行内必填不校验（官方 issue#9537，未实测，据源码结论登记）
+    边界修正_与外部评审源码推断的差异:
+      - 全空格串: 源码推断「不拦截」→ 实测「拦截」（V-11 轮次2）
+      - ajax 按钮红字: 源码推断「无校验提示」→ 实测「有 onChange 实时红字，但 POST 照发」（V-11 轮次3）
+      落地原则: 以实测为准写边界；源码结论仅作背景，不作为规则边界依据
+
+  V-12_close缺省_form_api_reload:
+    A组_close缺省_api_reload:
+      现象: 提交后弹层自动关闭
+      终端: 23:39:27 POST saveForm → 23:39:29 响应 → 23:39:29.251 新增 GET /api/mock2/sample
+      结论: 生效——close 缺省模式下 form api 的 reload（值 name）触发 crud 刷新
+    B组_close_false_api_reload:
+      现象: 提交后弹层保持打开（close:false）
+      终端: 23:39:48 POST saveForm → 23:39:50 响应，无新增 GET
+      结论: 不生效——close:false 下 form api reload 无效（V-2 结论复现）
+    定案: D-11 保留，来源补 V-12实测(2026-09-01)，状态升「已实测」
+    边界: 与 D-05 形成对偶——close 缺省 生效 / close:false 不生效
+
+  V-10_按钮级_reload:
+    A1组_弹层内ajax按钮_顶层reload_close_true:
+      现象: 勾选行 → 点 bulkActions 提交按钮 → 弹层关闭
+      终端: 23:42:08 POST saveForm → 23:42:10 响应 → 23:42:10.966 新增 GET
+      结论: 生效——ajax 按钮顶层 reload 属性（值 name）跨弹层边界定位成功
+    A2组_弹层内ajax按钮_顶层reload_无close:
+      现象: 提交后弹层保持打开
+      终端: 23:42:32 POST saveForm → 23:42:34 响应 → 23:42:34.335 新增 GET
+      结论: 生效——不带 close 也触发 reload
+    B组_actionType_reload_target:
+      现象: 点击按钮立即刷新
+      终端: 23:40:33 reload 后第一条 GET → 23:40:35 新增 GET
+      结论: 生效——actionType:reload 按钮用 target（值 name）刷新成功
+    C组_actionType_reload_顶层reload_无target:
+      现象: 点击按钮无刷新
+      终端: 23:40:48 reload 后第一条 GET，之后无新增
+      结论: 不生效——actionType:reload 按钮写顶层 reload 属性（无 target）不触发刷新
+    B与C是否等价: 否
+    close是否影响reload: 否（A1=A2 均生效）
+    D-12正文形态: 两列表格（按按钮类型区分，非按 close 区分）
+      刷新专用按钮（actionType:reload）→ 必须用 target（值 name），顶层 reload 属性无效
+      业务按钮（actionType:ajax/submit 等）→ 用顶层 reload 属性（值 name），操作完成后刷新
+    时序约束: close 不影响按钮级 reload（与 D-05 的 close:false 下 form api reload 不生效是不同机制，勿混淆）
+
+# =====================================================================
+落地改动清单（对照 handoff 第五节 10 项）:
+  A组_依赖V11:
+    - form-controls.md:28 F-02 改写（按实测边界修正：全空格拦截、ajax 跳过提交阻断而非无提示）
+    - self-check.md:41 必填项改「required:true 单独即可」
+    - dialog-form-add.json:39-40 删 validations.isRequired
+    - pitfalls.md 新增 P-17/P-18
+  B组_依赖V12:
+    - 分支_生效: D-11 升已实测、self-check 去待实测标记、META 已实测行补 D-11
+  C组_依赖V10:
+    - dialog-actions.md §3 表格三分 + 新增 D-12 权威定义（两列表格形态）
+    - crud.md:105 刷新机制表 action 按钮 D-03→D-12
+    - self-check.md:29 D-03 收窄 + 引 D-12
+  D组_收尾:
+    - INDEX.md:17-18 盲区改 D-12 + bulk-actions 补 D-12
+    - META.md reload 载体总表 + 规则数量 + 已实测行
+    - CHANGELOG.md 新增 1.2.1 条目

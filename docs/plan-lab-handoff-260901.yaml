@@ -86,7 +86,7 @@
     - CHANGELOG.md:10 改「6 组 33 项（覆盖 32 条规则，C-02 跨组复检）」
     - v2.0-plan.yaml：V-6 回填 disabled 源码结论 / V-10 增时序+属性名对照 / 批次 B 补 D-12 两列表格要求
 
-  外部评审已定夺的 5 个结论_摘要（详见 external-review-260901.yaml:285-430）:
+  外部评审已定夺的 5 个结论_摘要（详见 review-external-out-260901.yaml:285-430）:
     Q1: F-02「required + validations.isRequired 双写」是冗余教法，应改为「required:true 单独即可」
     Q2: D-11 未实测不得进自检清单，先跑 V-12 再定保留/删除
     Q3: 新增 D-12 = 按钮级 reload（合并 target 与顶层 reload 两种写法），不拆 D-13
@@ -164,9 +164,9 @@
       ]
     }
   判定标准:
-    - 轮次1: A/B/D 三个字段均出现必填错误提示，且终端**无** POST → required 单独有效、与 isRequired 等价
+    - 轮次1: A/B/C/D/E 五个字段**均**出现必填错误提示（C、E 也是 required:true，会一起报错），且终端**无** POST → required 单独有效、与 isRequired 等价
     - 轮次2: 全部放行，终端出现 POST → 0 与全空格均视为有值
-    - 轮次3: 终端**出现** POST 且无校验提示 → ajax 按钮跳过 form 校验链（确证 F-02 起源）
+    - 轮次3: 终端**出现** POST，且 A 字段下**不出现**必填红字（无提示+照发请求，两条同时成立才算跳过校验链）→ 确证 F-02 起源
     - 轮次4: 被拦截、报 F 必填 → hidden 字段仍参与校验（P-17 成立）
 
   ## V-12 —— close 缺省时 form api 的 reload 是否生效（决定 D-11 存废）
