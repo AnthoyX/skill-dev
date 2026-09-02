@@ -73,7 +73,8 @@
 | 载体 | 属性 | 值 | 规则 |
 |------|------|------|------|
 | 事件动作（`onEvent.actions` 内） | `componentId` | 目标组件 `id` | `D-03`（此处 `target` 失效） |
-| 按钮级（刷新专用按钮 / 业务按钮） | `target` 或顶层 `reload` | 目标组件 `name` | `D-12`（见下，两形态） |
+| 按钮级 - 刷新专用按钮（actionType:reload） | `target` | 目标组件 `name` | `D-12` |
+| 按钮级 - 业务按钮（ajax/submit 等） | 顶层 `reload` | 目标组件 `name` | `D-12` |
 | form api 配置 | `reload` | 目标组件 `name` | `D-11`（仅 close 缺省生效）/ `D-05`（close:false 不生效） |
 
 - **`D-03`** 事件动作内 reload 必须用 `componentId`（`target` 失效），目标组件必须设 `id`

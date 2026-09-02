@@ -9,6 +9,7 @@ v1.2 收尾实测三组（V-10/V-11/V-12，详见 `docs/verify-lab-260901.yaml`�
 - **V-10 按钮级 reload**：新增 D-12（两形态）——刷新专用按钮 `actionType:reload` 必须用 `target`（顶层 reload 无效）；业务按钮 ajax/submit 用顶层 `reload` 属性（close 不影响）；§3 表格三分、crud.md §9 与 META reload 载体总表同步
 - 规则数量 32→33（D×11→D×12）；排障 16→18；META 可信度分级「已实测」行补 D-11
 - 终检：权威形态唯一性 / 编号连续 / 悬空引用=0 / 全文 CRLF（见 `docs/verify-lab-260901.yaml` 末）
+- 评审回执后补（`docs/review-v121-260901-in.yaml`，有条件通过）：SKILL.md version 同步 1.2.1（必修）；§2 决策表「刷新」行补 D-03/D-12/D-11/D-05；dialog-actions §3 表按钮级行拆两行；form-controls §2 F-02 补 P-18 引用。建议3（三表重叠）跳过（评审自述不强制）
 
 ## 1.2.0（2026-08-31）
 

@@ -1,7 +1,7 @@
 ---
 name: amis-helper
 description: 百度amis低代码框架JSON Schema生成。包含高频坑点的避坑规则与可复用骨架，生成可直接落地的crud/弹层/表单/导入导出配置。
-version: 1.2.0
+version: 1.2.1
 amis-version: "6.x（规则实测基于 6.13.0）"
 allowed-tools: Read, Grep, Glob
 disable: false
@@ -40,7 +40,7 @@ disable: false
 | 远程联想输入 | select + autoComplete 对象 | input-text 手输 |
 | 弹层内选择数据 | dialog + crud(loadDataOnce) + bulkActions | |
 | 表格loading/按钮防重复 | 弹层提交靠内建 loading；导出/下载按钮用 Service 包层 + data 变量 + loadingOn | 弹层提交按钮配 loadingOn（死配置） |
-| 刷新其他组件 | 事件动作用 componentId reload；close:false 弹层默认不刷新 crud，须在 submitSucc 里显式 componentId reload | 弹层 form api 里写 reload（close:false 下不生效，实测） |
+| 刷新其他组件 | 事件动作用 componentId reload（`D-03`）；按钮级刷新专用按钮用 target、业务按钮用顶层 reload（`D-12`）；close 缺省弹层 form api reload 生效（`D-11`）；close:false 弹层须在 submitSucc 里显式 componentId reload（`D-05`） | 弹层 form api 里写 reload 在 close:false 下不生效（实测） |
 
 ## 3. 触发矩阵（按需读取）
 
