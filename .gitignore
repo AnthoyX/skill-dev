@@ -13,3 +13,6 @@ _amis-lab/*.log
 
 # 浏览器自动化工具缓存
 .playwright-cli/
+
+# SkillHub 安装的第三方 skill（仅本地参考，永不提交）
+skills/@user_64e5b706/
