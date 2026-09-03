@@ -59,6 +59,12 @@ copy schemas\v3-download-timing.json schema.json
 | `v11-required.json` | V-11：required 校验链（required 与 isRequired 等价、0/全空格边界、ajax 跳过提交阻断、隐藏必填误拦截） |
 | `v12-close-reload.json` | V-12：close 缺省 vs close:false 下 form api reload 是否生效（D-11 存废） |
 | `v10-button-reload.json` | V-10：按钮级 reload 两形态（刷新专用按钮 target / 业务按钮顶层 reload） |
+| `v13a-d06-submit.json` | V-13-A：form 配 `onEvent.submit` 是否拦截内置提交（D-06 存废） |
+| `v13b-a01-scope.json` | V-13-B：setValue 作用域三层观测（A-01 / D-09） |
+| `v13c-c04-statistics.json` | V-13-C：单页下 statistics 是否渲染（C-04 存废） |
+| `v14a-f01-joinvalues.json` | V-14-A2/A3：多选提交值形态矩阵（joinValues/extractValue/delimiter）+ join 过滤器 |
+| `v14b-f10-adaptor.json` | V-14-A：F-01 默认三组 + F-10 注入式对照（adaptor / adapter / 不写转换） |
+| `v14c-d03-reload.json` | V-14-B：事件动作内 reload 三种定位写法（target / componentId / componentName） |
 
 > `schema.json` 里接口地址写相对路径 `/api/mock2/sample`，和 amis 文档站的写法一致，
 > 验证通过后可直接搬到真实项目，不用改。

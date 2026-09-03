@@ -60,6 +60,14 @@ ROWS = [
 ]
 
 
+# 字典类选项，供 nonstd / wrap 两种形态使用
+OPTIONS = [
+    {'label': 'Alpha', 'value': 'a'},
+    {'label': 'Beta', 'value': 'b'},
+    {'label': 'Gamma', 'value': 'g'},
+]
+
+
 def log(msg):
     now = datetime.now().strftime('%H:%M:%S.%f')[:-3]
     print('[%s] %s' % (now, msg), flush=True)
@@ -121,26 +129,46 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             wait = 0.0
 
-        log('%s %s  waitSeconds=%s fail=%d  请求到达' % (self.command, u.path, raw_wait, fail))
+        nonstd = q.get('nonstd', ['0'])[0] == '1'
+        wrap = q.get('wrap', [''])[0]
+
+        log('%s %s  waitSeconds=%s fail=%d nonstd=%d wrap=%s  请求到达'
+            % (self.command, u.path, raw_wait, fail, nonstd, wrap or '-'))
         if body:
-            log('        body=%s' % body.decode('utf-8', 'replace')[:300])
+            log('        body=%s' % body.decode('utf-8', 'replace')[:500])
 
         if wait > 0:
             time.sleep(wait)
 
-        payload = {
-            'status': 1 if fail else 0,
-            'msg': 'mock failure' if fail else 'ok',
-            'data': {
-                'count': 171,
-                'total': 171,
-                'rows': ROWS,
-                'items': ROWS,
-            },
-        }
+        if nonstd:
+            # 非 amis 标准响应：业务码 code=200，data 直接是数组（模拟国内后端常见结构）
+            payload = {
+                'code': 200,
+                'msg': 'ok',
+                'data': OPTIONS,
+            }
+        elif wrap == 'options':
+            # amis 标准 status，但 data 被包了一层 options（用于验证 F-07）
+            payload = {
+                'status': 1 if fail else 0,
+                'msg': 'mock failure' if fail else 'ok',
+                'data': {'options': OPTIONS},
+            }
+        else:
+            payload = {
+                'status': 1 if fail else 0,
+                'msg': 'mock failure' if fail else 'ok',
+                'data': {
+                    'count': 171,
+                    'total': 171,
+                    'rows': ROWS,
+                    'items': ROWS,
+                },
+            }
         out = json.dumps(payload, ensure_ascii=False).encode('utf-8')
-        log('%s %s  响应 %dB (status=%d)  <<< 此刻前端 loading 应结束'
-            % (self.command, u.path, len(out), payload['status']))
+        log('%s %s  响应 %dB (status=%s)  <<< 此刻前端 loading 应结束'
+            % (self.command, u.path, len(out),
+               payload.get('status', payload.get('code', '-'))))
         self._send(200, out, 'application/json; charset=utf-8')
 
     def _static(self, u):

@@ -1,0 +1,67 @@
+{
+  "type": "page",
+  "title": "V-13-A  D-06 onEvent.submit",
+  "body": [
+    {
+      "type": "button",
+      "label": "OPEN-A",
+      "level": "primary",
+      "actionType": "dialog",
+      "dialog": {
+        "title": "A: form WITH onEvent.submit",
+        "actions": [
+          { "type": "button", "label": "Cancel", "actionType": "close" },
+          { "type": "button", "label": "SUBMIT-A", "level": "primary", "actionType": "submit", "close": false }
+        ],
+        "body": {
+          "type": "form",
+          "onEvent": {
+            "submit": {
+              "actions": [
+                { "actionType": "toast", "args": { "msg": "EVT-SUBMIT-FIRED" } }
+              ]
+            },
+            "submitSucc": {
+              "actions": [
+                { "actionType": "toast", "args": { "msg": "SUBMITSUCC-FIRED-A" } },
+                { "actionType": "closeDialog" }
+              ]
+            }
+          },
+          "api": { "method": "post", "url": "/api/lab/d06-a?waitSeconds=1" },
+          "body": [
+            { "type": "input-text", "name": "f1", "label": "F1" }
+          ]
+        }
+      }
+    },
+    {
+      "type": "button",
+      "label": "OPEN-B",
+      "level": "default",
+      "actionType": "dialog",
+      "dialog": {
+        "title": "B: form WITHOUT onEvent.submit (baseline)",
+        "actions": [
+          { "type": "button", "label": "Cancel", "actionType": "close" },
+          { "type": "button", "label": "SUBMIT-B", "level": "primary", "actionType": "submit", "close": false }
+        ],
+        "body": {
+          "type": "form",
+          "onEvent": {
+            "submitSucc": {
+              "actions": [
+                { "actionType": "toast", "args": { "msg": "SUBMITSUCC-FIRED-B" } },
+                { "actionType": "closeDialog" }
+              ]
+            }
+          },
+          "api": { "method": "post", "url": "/api/lab/d06-b?waitSeconds=1" },
+          "body": [
+            { "type": "input-text", "name": "f2", "label": "F2" }
+          ]
+        }
+      }
+    }
+  ]
+}

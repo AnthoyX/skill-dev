@@ -1,0 +1,26 @@
+{
+  "type": "page",
+  "title": "V-14-A2/A3  F-01 joinValues matrix + join filter",
+  "body": [
+    {
+      "type": "form",
+      "api": { "method": "post", "url": "/api/lab/v14-form2" },
+      "body": [
+        { "type": "select", "name": "m1_plain", "label": "M1 multiple only", "multiple": true, "value": ["a", "b"], "options": [ { "label": "Alpha", "value": "a" }, { "label": "Beta", "value": "b" } ] },
+        { "type": "select", "name": "m2_jointrue", "label": "M2 multiple+joinValues=true", "multiple": true, "joinValues": true, "value": ["a", "b"], "options": [ { "label": "Alpha", "value": "a" }, { "label": "Beta", "value": "b" } ] },
+        { "type": "select", "name": "m3_jointrue_extract", "label": "M3 +extractValue", "multiple": true, "joinValues": true, "extractValue": true, "value": ["a", "b"], "options": [ { "label": "Alpha", "value": "a" }, { "label": "Beta", "value": "b" } ] },
+        { "type": "select", "name": "m4_jointrue_pipe", "label": "M4 +delimiter=|", "multiple": true, "joinValues": true, "delimiter": "|", "value": ["a", "b"], "options": [ { "label": "Alpha", "value": "a" }, { "label": "Beta", "value": "b" } ] },
+        { "type": "select", "name": "m5_extract_only", "label": "M5 extractValue only", "multiple": true, "extractValue": true, "value": ["a", "b"], "options": [ { "label": "Alpha", "value": "a" }, { "label": "Beta", "value": "b" } ] }
+      ],
+      "actions": [ { "type": "submit", "label": "SUBMIT-M", "level": "primary" } ]
+    },
+    {
+      "type": "form",
+      "api": { "method": "post", "url": "/api/lab/v14-form3", "data": { "raw": "${m1}", "joined_comma": "${m1|join:','}", "joined_pipe": "${m1|join:'|'}" } },
+      "body": [
+        { "type": "select", "name": "m1", "label": "M1 multiple", "multiple": true, "value": ["a", "b"], "options": [ { "label": "Alpha", "value": "a" }, { "label": "Beta", "value": "b" } ] }
+      ],
+      "actions": [ { "type": "submit", "label": "SUBMIT-F", "level": "primary" } ]
+    }
+  ]
+}

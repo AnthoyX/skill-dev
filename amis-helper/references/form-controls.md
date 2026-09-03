@@ -8,7 +8,6 @@
 {
   "type": "select", "name": "country", "label": "Country",
   "clearable": true, "multiple": true, "searchable": true,
-  "extractValue": true, "joinValues": true, "delimiter": ",",
   "labelField": "name", "valueField": "name",
   "source": {
     "method": "get",
@@ -18,8 +17,11 @@
 }
 ```
 
-- **`F-01`** 多选必带四件套：`multiple` + `extractValue` + `joinValues` + `delimiter`
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:提交的是数组而非逗号分隔字符串，后端解析失败`
+- **`F-01`** 多选 select 的提交值**恒为数组**（6.13.0 实测五种配置无一产生逗号字符串）：
+  - **禁止 `joinValues: false`**——数组元素会变成 `{label,value}` 整个选项对象
+  - `joinValues: true` / `extractValue` / `delimiter` 对提交值形态**无影响**，非必需（实测五种组合提交值均为 `["a","b"]`）
+  - 后端要逗号分隔字符串时，在 api.data 里用 `join` 过滤器：`"codes": "${field|join:','}"`（实测得到 `a,b`）
+  `来源:实战观察+V-14实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:joinValues:false 时提交对象数组后端解析失败；误以为配了 joinValues 就能拿到字符串`
 - 后端返回 `{code:200,data:[...]}` 非 amis 标准时用 `adaptor` 转 status → references/data-source.md §2（`A-02`）
 - 后端已标准时 source 可字符串简写
 
@@ -58,7 +60,7 @@
 - **`F-07`** 联想响应的 data **直接是数组**，不是 `{options:[...]}` 嵌套
   `来源:实战观察|状态:实战观察|版本:6.x|后果:下拉为空`
 - `${term}` 是 amis 默认搜索词变量（GET 为 query 参数）；`overlayStyle.width` 控制下拉面板宽度
-- 排查链（联想不生效时按序）：请求未发出（sendOn/autoComplete 配置错）→ 404（路由未部署）→ 401（需登录）→ 下拉项显示 invalid label（两类根因：① adapter 字符串转换不可用 → `F-10`；② 返回字段与 labelField 不匹配）→ 选中值不对（valueField 错）
+- 排查链（联想不生效时按序）：请求未发出（sendOn/autoComplete 配置错）→ 404（路由未部署）→ 401（需登录）→ 下拉为空 / 回退显示原始 value（`adaptor` 未生效或误拼成 `adapter` → `F-10`）→ 下拉项显示 invalid label（`labelField` 与返回字段不匹配）→ 选中值不对（valueField 错）
 
 ## §4 编辑弹层展示字段
 
@@ -86,8 +88,8 @@
 
 ## §6 宽度控制（只认 columnRatio）
 
-- **`F-06`** 控制表单项宽度用 `columnRatio`（grid 布局占列数，如 `"columnRatio": 2`）
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:宽度设置不生效`
+- **`F-06`** 控制表单项宽度用 `columnRatio`（form group 内的列宽比例，如 `"columnRatio": 2`；源码 `r.columnRatio || getWidthRate(r.columnClassName,!0)`）
+  `来源:实战观察+form源码(2026-09-02)|状态:据源码|版本:6.13.0|后果:宽度设置不生效`
 
 | 尝试 | 结果 |
 |------|------|
@@ -104,8 +106,10 @@
 
 ## §8 invalid label 陷阱
 
-- **`F-10`** adapter 字符串转换在 amis 6.13.0 不可用（报 invalid label），勿选
-  `来源:实战观察|状态:实战观察|版本:6.13.0|后果:下拉项显示 invalid label`
+- **`F-10`** `adapter` 字符串转换在 amis 6.13.0 **完全无效**，勿选——属性名只有 `adaptor`，见 `A-02`
+  `来源:实战观察+amis源码+V-14实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:数据源不被转换，下拉为空 / 回退显示原始 value`
+  实测对照（同一非标准响应，各自注入可识别 label）：`adaptor` 组正常渲染注入值；`adapter` 组与「不写转换」组表现一致，均回退显示原始 value。
+  注：「invalid label」是 `labelField` 匹配不上的另一类表现，不是拼写错误的直接后果 → 排查链见 §3（`F-03`）
 
 ## §9 常用控件清单
 

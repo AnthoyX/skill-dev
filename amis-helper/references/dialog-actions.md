@@ -38,8 +38,9 @@
   例外：download 导出按钮**必须**配对 → §2（`D-08`）
 - **`D-05`** `close: false` 下 form api 的 `reload` **不生效**、提交也**不默认刷新** CRUD（实测带不带 reload 均无 crud 请求），api 里**不要写 reload**；唯一写法是 `submitSucc` 显式 `{"actionType":"reload","componentId":"..."}`（E 组实证）
   `来源:V-2实测(2026-08-31)|状态:已实测|版本:6.13.0|后果:表格不刷新`
-- **`D-06`** 禁止 form `onEvent.submit`——会拦截 `actionType:"submit"` 的内置调用，接口不发出
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:接口不调用、submitSucc 不触发、loading 卡死`
+- **`D-06`** 禁止 form `onEvent.submit`——会拦截 `actionType:"submit"` 的内置调用，接口不发出（V-13-A 实测 A 组：配了 `onEvent.submit` 后接口零请求、`submitSucc` 不触发、弹层保持打开；B 组基线接口正常发出且弹层关闭）
+  `来源:实战观察+V-13-A实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:接口不调用、submitSucc 不触发、弹层不关闭（点了没反应）`
+  注：源码中事件动作须显式 `preventDefault:true` 才阻止默认行为，但 form 的 submit 事件属于例外——以实测为准
 - **`D-07`** 确认弹层用 `actionType:"dialog"` 自定义弹框，不用 `confirmText`
   `来源:实战观察|状态:实战观察|版本:6.x|后果:原生框无法 loading、无法展示复杂提示`
 - **`D-11`** 弹层默认关闭模式（close 缺省）下 form api 的 `reload`（值为 crud 的 `name`）生效，提交后自动刷新 CRUD；可用 `"reload": "none"` 显式关闭
@@ -77,8 +78,8 @@
 | 按钮级 - 业务按钮（ajax/submit 等） | 顶层 `reload` | 目标组件 `name` | `D-12` |
 | form api 配置 | `reload` | 目标组件 `name` | `D-11`（仅 close 缺省生效）/ `D-05`（close:false 不生效） |
 
-- **`D-03`** 事件动作内 reload 必须用 `componentId`（`target` 失效），目标组件必须设 `id`
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:reload 不生效`
+- **`D-03`** 事件动作内 reload 必须用 `componentId`（`target` 失效），目标组件必须设 `id`；等价写法 `componentName`（按 name 定位，实测与 `componentId` 同样生效），统一推荐 `componentId`
+  `来源:实战观察+amis源码+V-14实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:reload 不生效（实测 target 写法零请求；componentId / componentName 均触发刷新）`
 - **`D-12`** 按钮级 reload，按按钮类型分两形态（V-10 实测）:
   - 刷新专用按钮（`actionType:"reload"`）→ **必须用 `target`**（值 name）；写顶层 `reload` 属性（无 target）**不生效**
   - 业务按钮（`actionType:"ajax"`/`"submit"` 等）→ 用顶层 `reload` 属性（值 name），操作完成后刷新；`close` 不影响其生效
@@ -87,8 +88,8 @@
 
 ## §4 Service 包装层（仅无内建 loading 的按钮需要）
 
-- **`D-09`** loading 变量声明在**外层 Service 的 `data`**，`setValue` 的 componentId 指向 service（机制：crud 内 setValue 不向外传播 → references/data-source.md §5 `A-01`）；弹层提交按钮不需要 Service → `D-04`
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:loadingOn 读不到变量恒 false`
+- **`D-09`** loading 变量声明在**外层 Service 的 `data`**，`setValue` 的 `componentId` 指向 Service（机制 → references/data-source.md §5 `A-01`；V-13-B 实测确认 crud headerToolbar 按钮能读到 Service 变量，方案成立）；弹层提交按钮不需要 Service → `D-04`
+  `来源:实战观察+V-13-B实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:loadingOn 读不到变量恒 false`
 
 ```json
 { "type": "service", "id": "pageStateService", "data": { "exportDownloading": false }, "body": [ { "type": "crud", "id": "xxxCrud", "name": "xxxCrud" } ] }

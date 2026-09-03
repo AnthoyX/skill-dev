@@ -1,0 +1,194 @@
+# amis-helper v1.2.1 自查报告
+# 用途：v1.2.2 修复执行依据（每条带 fix，可直接照改）
+# 取证方式：静态扫描（JSON/CRLF/ID 引用/行数）+ amis 6.13.0 SDK 全文检索
+
+meta:
+  date: 2026-09-02
+  target: amis-helper@1.2.1
+  verdict: 骨架健康；2 处源码可证事实错误 + 3 处元数据漏改 + 6 类覆盖/示例问题
+  scope: 只报问题与修法，不含实测结论（待实测项见 §6）
+
+baseline:
+  pass:
+    - 6/6 示例 JSON 解析 OK
+    - 16/16 文件 CRLF 统一（CR==LF）
+    - 33 条 ID 无悬空无跳号（R×1 C×8 D×12 F×10 A×2）
+    - 规则层 652 行 / 预算 ≤800；示例层 451 行 / 预算 ≤460
+  evidence:
+    sdk_js: {path: _amis-lab/vendor/sdk.js, size: 2.06MB, 覆盖: axios + form + select + 事件动作}
+    rest_js: {path: _amis-lab/vendor/rest.js, size: 2.90MB, 覆盖: crud + transfer}
+
+# ---------------------------------------------------------------- 1. P0 确凿错误
+
+p0:
+  - id: ERR-01
+    loc: references/data-source.md §2 / A-02
+    claim: 括注「adapter 也能识别但禁止混用」
+    fact: |
+      rest.js: adapter 出现 0 次 / adaptor 出现 6 次
+      sdk.js: adapter 共 5 处，全部是 axios 内部配置
+             （axios/lib/adapters/xhr.js、e.adapter||d.adapter），与 amis api 无关
+    impact: A-02 与 F-10（adapter 不可用·报 invalid label）直接矛盾，A-02 为错方
+    fix:
+      删: A-02 括注「（adapter 也能识别但禁止混用）」
+      改为: '非 amis 标准响应必须用 adaptor 转换（6.13.0 仅识别 adaptor；adapter 为常见误拼，写了完全无效）'
+
+  - id: ERR-02
+    loc: references/form-controls.md §1 / F-01
+    claim: 多选必带四件套 multiple + extractValue + joinValues + delimiter，否则提交数组
+    fact: 'sdk.js select defaultProps = {delimiter:",", valueField:"value", labelField:"label", joinValues:!0, extractValue:!1}'
+    impact:
+      - joinValues / delimiter 是默认值 → 写出来纯冗余
+      - extractValue 不决定"是否拼接"，只在 joinValues:false 时决定数组元素是 value 还是整个选项
+      - 不写四件套不会提交数组；仅 joinValues:false 才会
+      - 与 F-02「勿写冗余配置」精神自相矛盾
+    fix:
+      规则改为: |
+        F-01 多选 select：必须 multiple:true，且保持 joinValues 为默认 true（显式设 false 会提交数组）；
+        delimiter（默认 ","）与 extractValue 按需写，非必需
+        来源:实战观察+select源码(2026-09-02)|状态:据源码|版本:6.13.0|后果:joinValues:false 时提交数组，后端解析失败
+      连带: examples/crud-base.json 的 country select 可精简为仅 multiple（冗余项不影响功能，可选）
+
+# ---------------------------------------------------------------- 2. P1 元数据漏改
+
+p1_sync:
+  - id: SYNC-01
+    loc: SKILL.md §1 标题
+    fact: 写「完整 32 条」，META 已 33 条（v1.2.1 由 32→33 时漏同步）
+    fix: 32 → 33
+  - id: SYNC-02
+    loc: META.md 规则可信度分级 / 已实测 行
+    fact: 列 5 条（D-01/D-04/D-05/D-08/D-11），实际 7 条
+    fix: 补 D-12（V-10 实测）、F-02（V-11 实测）
+  - id: SYNC-03
+    loc: examples/INDEX.md §1 表格
+    fact: dialog-form-add.json 声明 57 行，实际 56 行
+    fix: 57 → 56
+
+# ---------------------------------------------------------------- 3. P1 SSOT 违反
+
+p1_ssot:
+  - id: SSOT-01
+    loc: [META.md reload 载体总表, references/crud.md §9, references/dialog-actions.md §3]
+    fact: |
+      同一张「reload 载体」表三处重复；crud.md §9 自称"权威定义在弹层域"，
+      则 META 那张表定位自我矛盾。ID 全文出现次数：D-05=19、D-12=15、D-11=13
+    fix:
+      权威: 保留 references/dialog-actions.md §3 表格（D-03/D-05/D-11/D-12 同域）
+      META.md: 删表，改为一行「reload 载体速查 → references/dialog-actions.md §3（D-03/D-05/D-11/D-12）」
+      crud.md §9: 删表，同上改为一行引用（保留"刷新机制"入口，不丢可发现性）
+
+# ---------------------------------------------------------------- 4. P2 覆盖缺口
+
+p2_gap:
+  - id: GAP-01
+    loc: references/pitfalls.md
+    fact: 18 条 P 条目仅覆盖 33 条规则中约 14 条
+    已覆盖: C-01/C-04/C-06/C-08(P-13/14 + CHANGELOG)、D-01~D-12 大部、F-02~F-04/F-06/F-07、R-01
+    无入口: [C-03, C-05, C-07, F-01, F-05, F-08]
+    已由他条覆盖无需补: [C-02(→P-03), A-01(→P-05), F-09(→P-10)]
+    fix: 补 6 条排障条目（P-19~P-24），行数 +18 → 规则层 670，仍 ≤800
+  - id: GAP-02
+    loc: references/form-controls.md §2 / F-02
+    fact: 「ajax 按钮提交跳过提交前校验阻断」是 V-11 实测边界，但无对应 P 条目（P-17/P-18 有，此条漏）
+    fix: 并入 GAP-01 的 P-19~P-24 批次
+  - id: GAP-03
+    loc: references/dialog-actions.md §3 / D-03
+    fact: '源码 e.componentId ? getComponentById : getComponentByName → componentName 与 componentId 等价可用，规则只写了 componentId'
+    fix: D-03 补「等价写法 componentName（按 name 定位），推荐 componentId（按 id 定位，与 C-02 一致）」
+  - id: GAP-04
+    loc: references/data-source.md §1
+    fact: method 列 get/post/put/delete，源码 axios 还支持 patch
+    fix: 补 patch
+  - id: GAP-05
+    loc: SKILL.md §3 触发矩阵
+    fact: 无 META.md 入口 → R-01 / 版本锚定 / 可信度分级 / reload 总表无处可查
+    fix: 补一行「版本 / 规则可信度 / R-01 → META.md」
+
+# ---------------------------------------------------------------- 5. P2 示例层
+
+p2_example:
+  - id: EX-01
+    loc: examples/crud-base.json + examples/INDEX.md §2
+    fact: |
+      crud-base 的 operation.buttons 为空数组，INDEX 指引粘入 edit / confirm / picker 三个按钮 → 组合结果是
+      3 个平铺按钮，直接违反 C-08（行内多按钮用 button-group 收拢），且示例未示范包装方式
+    fix: |
+      INDEX.md §2 增补一段 JSON 片段，示范三个按钮如何包进单个 button-group；
+      crud-base.json 的 operation 保持空占位不变（避免行数与 INDEX 声明错位）
+  - id: EX-02
+    loc: examples/
+    fact: v1.2 拆掉 crud-full.json 后整页 golden sample 消失，只剩文字组合说明（EX-01 的危害放大器）
+    fix: |
+      不新增文件（示例层 451/460 余量不足），改由 INDEX.md §2 的 button-group 片段承担端到端示范；
+      若后续要补 page-full.json，需先把示例层预算上调
+  - id: EX-03
+    loc: examples/dialog-confirm-loading.json
+    fact: 文件名含 loading，但 v1.1 已删 loadingOn 死配置（42 行内容无 loading 相关配置）
+    fix: git mv 为 dialog-confirm.json（保留历史），同步 SKILL.md §4 清单 + INDEX.md §1
+  - id: EX-04
+    loc: examples/dialog-form-edit.json
+    fact: '两个 static 写法不一致：code 写了 "value": "${code}"，name 未写'
+    fix: 统一为不写 value（靠数据域回显），与 F-08 示例写法对齐
+  - id: EX-05
+    loc: examples/INDEX.md §1 注 2
+    fact: 自承「button loading 视觉在 6.13.0 SDK 下待复核」，未闭环
+    fix: 转入 §6 待实测，实测后按结论改注或删注
+
+# ---------------------------------------------------------------- 6. 待实测（V-13 候选）
+
+# 已于 2026-09-03 全部完成，结论见 docs/verify-lab-260903.yaml
+pending_verify:
+  - id: V-13-A
+    rule: D-06（form onEvent.submit 会拦截内置提交）
+    result: '成立，升「已实测」：接口零请求 + submitSucc 不触发 + 弹层不关闭；源码推断被实测推翻'
+    risk: 高——后果严重（接口不调用 / submitSucc 不触发 / loading 卡死）且机制存疑
+    doubt: |
+      源码显示事件动作须显式 preventDefault:true 才阻止默认行为：
+      l.preventDefault ? evalExpressionWithConditionBuilderAsync(l.preventDefault,g,!1) : ...
+      与「默认拦截」的说法不符
+    method: close:false 弹层 + form onEvent.submit 配一条无害动作（如 toast），观察接口是否发出
+  - id: V-13-B
+    rule: A-01（crud 内 setValue 不向外传播）
+    result: 'A-01 修正后升「已实测」、D-09 升「已实测」：不带 componentId 落在按钮自身域（三处全读不到），指向 Service 时 headerToolbar 可读但行内只拿初始值'
+    risk: 中——是 D-09（Service 包层）的唯一依据，至今未实测
+    method: crud headerToolbar 按钮 setValue 到自身数据域 vs 到 Service，对比 loadingOn 是否读到
+  - id: V-13-C
+    rule: C-04（statistics 在 total <= perPage 时不渲染）
+    result: '成立，升「已实测」：total=5 时 statistics 节点完全不存在，total=171 正常渲染；tpl 替代方案单页下正常'
+    risk: 低——结论「改用 tpl」无论真伪都安全
+    note: 官方 crud defaultProps 是 footerToolbar:["statistics","pagination"]，实测后需补一句「为何覆盖官方默认」
+
+# ---------------------------------------------------------------- 7. 源码可升级来源（结论不变）
+
+upgrade_source:
+  C-03: {结论: 成立, 证据: 'crud defaultProps syncLocation:!0（默认 true，必须显式关）', 升为: 据源码}
+  D-03: {结论: 成立, 证据: 'e.componentId ? getComponentById : getComponentByName（不认 target）', 升为: 据源码}
+  F-06: {结论: 基本成立, 证据: 'r.columnRatio || getWidthRate(r.columnClassName,!0)', 措辞修正: 是 form group 列宽比例，非"grid 布局"}
+
+# ---------------------------------------------------------------- 8. 命中率（v1.2 目标项）
+
+hit_rate:
+  - id: HIT-01
+    loc: SKILL.md frontmatter / description
+    fact: 89 字，仅 amis 一个触发词；缺 低代码 / 后台管理 / JSON Schema / 百度
+    fix: 补触发词，控制在 200 字内（description 无硬上限，但需保持可读）
+  - id: HIT-02
+    loc: SKILL.md frontmatter
+    fact: 'disable: false 是非标准字段（未被任何运行时消费）'
+    fix: 删除（allowed-tools 保留，为 v1.1 既定项）
+
+# ---------------------------------------------------------------- 9. 执行顺序
+
+exec_order:
+  1: [ERR-01, ERR-02]                      # 事实错误，优先
+  2: [SYNC-01, SYNC-02, SYNC-03]           # 元数据漏改，一行一处
+  3: [SSOT-01]                             # 三表合一，改动面最大
+  4: [GAP-03, GAP-04, GAP-05]              # 小补，逐条独立
+  5: [EX-01, EX-03, EX-04]                 # 示例层；EX-03 用 git mv
+  6: [GAP-01, GAP-02]                      # 补 6~7 条排障条目，最后做（会重排 P 编号）
+  7: [HIT-01, HIT-02]                      # 命中率，随版本收尾
+  8: [V-13-A, V-13-B, V-13-C]              # 实测单开一轮，不进 v1.2.2
+  note: |
+    每批完成后复核：ID 连续性 / 悬空引用 = 0 / CRLF / 行数预算 / INDEX 声明行数与实际一致。
+    v1.2.2 提交前跑一次全量基线（同 baseline）。

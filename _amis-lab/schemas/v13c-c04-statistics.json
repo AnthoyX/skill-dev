@@ -1,0 +1,53 @@
+{
+  "type": "page",
+  "title": "V-13-C  C-04 statistics",
+  "body": [
+    { "type": "tpl", "tpl": "A group: total=5, perPage=10 (single page)" },
+    {
+      "type": "crud",
+      "id": "crudA",
+      "name": "crudA",
+      "syncLocation": false,
+      "api": {
+        "method": "get",
+        "url": "/api/mock2/sample",
+        "adaptor": "payload.data.total = 5; payload.data.count = 5; payload.data.items = payload.data.items.slice(0, 5); payload.data.rows = payload.data.rows.slice(0, 5); return payload;"
+      },
+      "columns": [
+        { "name": "id", "label": "ID-A" }
+      ],
+      "footerToolbar": ["statistics", "pagination"]
+    },
+    { "type": "tpl", "tpl": "B group: total=171 (multi page)" },
+    {
+      "type": "crud",
+      "id": "crudB",
+      "name": "crudB",
+      "syncLocation": false,
+      "api": "/api/mock2/sample",
+      "columns": [
+        { "name": "id", "label": "ID-B" }
+      ],
+      "footerToolbar": ["statistics", "pagination"]
+    },
+    { "type": "tpl", "tpl": "C group: total=5 with tpl instead of statistics (C-04 workaround)" },
+    {
+      "type": "crud",
+      "id": "crudC",
+      "name": "crudC",
+      "syncLocation": false,
+      "api": {
+        "method": "get",
+        "url": "/api/mock2/sample",
+        "adaptor": "payload.data.total = 5; payload.data.count = 5; payload.data.items = payload.data.items.slice(0, 5); payload.data.rows = payload.data.rows.slice(0, 5); return payload;"
+      },
+      "columns": [
+        { "name": "id", "label": "ID-C" }
+      ],
+      "footerToolbar": [
+        { "type": "tpl", "tpl": "TPL-Total ${total} records, Page ${page}" },
+        "pagination"
+      ]
+    }
+  ]
+}

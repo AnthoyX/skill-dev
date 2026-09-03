@@ -6,11 +6,11 @@
 
 | 文件 | 场景 | 宿主依赖 | 覆盖规则 ID | 行数 |
 |---|---|---|---|---|
-| crud-base.json | 列表页骨架：Service 包层 + crud（分页/统计条/mapping/filter/导出） | 自包含 | C-01~C-08, D-02, D-08, D-09, A-01, A-02, F-01, F-03, F-04, F-06 | 144 |
+| crud-base.json | 列表页骨架：Service 包层 + crud（分页/统计条/mapping/filter/导出） | 自包含 | C-01~C-08, D-02, D-08, D-09, A-01, A-02, F-01, F-03, F-04, F-06 | 141 |
 | dialog-import.json | Excel 导入弹层（asBlob + form-data + 模板下载） | pageStateService 的 templateDownloading + mainCrud.id | D-01, D-02, D-04, D-05, D-08, F-05 | 71 |
-| dialog-form-add.json | 新增弹层 | mainCrud.id | D-01, D-04, D-05, F-02, F-03, F-04 | 57 |
+| dialog-form-add.json | 新增弹层 | mainCrud.id | D-01, D-04, D-05, F-02, F-03, F-04 | 56 |
 | dialog-form-edit.json | 编辑弹层（static + hidden） | mainCrud.id + 行上下文 ${code}/${name}/${id} | D-01, D-04, D-05, F-08 | 41 |
-| dialog-confirm-loading.json | 危险操作确认弹层 | mainCrud.id + 行上下文 ${code}/${id} | D-01, D-04, D-05, D-07 | 41 |
+| dialog-confirm.json | 危险操作确认弹层 | mainCrud.id + 行上下文 ${code}/${id} | D-01, D-04, D-05, D-07 | 41 |
 | bulk-actions-picker.json | 弹层内数据选择器（loadDataOnce + bulkActions） | mainCrud.name + 行上下文 ${groupCode}/${groupId} | D-10, D-12, A-02 | 59 |
 
 注：
@@ -27,6 +27,10 @@ page
       ├─ api(adaptor) / filter / columns(mapping) / footerToolbar 统计条 / headerToolbar[reload, filter-toggler, Export] ← crud-base 自带
       ├─ headerToolbar += Import ← dialog-import（粘进 headerToolbar 数组）
       ├─ headerToolbar += Add ← dialog-form-add（粘进 headerToolbar 数组）
-      └─ operation.buttons ← dialog-form-edit / dialog-confirm-loading / bulk-actions-picker（粘进按钮数组）
+      └─ operation.buttons ← dialog-form-edit / dialog-confirm / bulk-actions-picker
 
-**crud-base 的 operation 列 `buttons: []` 是骨架占位，不是终态**——按需把上面三个片段粘进该数组。
+**crud-base 的 operation 列 `buttons: []` 是骨架占位**。多个行内按钮必须包进单个 `button-group`（`C-08`），三个片段按序填入其 `buttons` 数组：
+
+```json
+{ "type": "button-group", "buttons": [ <dialog-form-edit>, <dialog-confirm>, <bulk-actions-picker> ] }
+```

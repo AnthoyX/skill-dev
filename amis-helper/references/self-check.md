@@ -38,7 +38,7 @@
 
 ## 5. 表单控件
 
-- [ ] 多选 select 带齐 `multiple` + `extractValue` + `joinValues` + `delimiter`？→ `F-01`
+- [ ] 多选 select 设了 `multiple`，且 `joinValues` 未被显式设为 false？→ `F-01`
 - [ ] 必填字段配了 `required: true`（无需双写 `validations.isRequired`）？→ `F-02`
 - [ ] `autoComplete` 是对象（method/url/sendOn 都在内），非 `true` + 外部 source？→ `F-03`
 - [ ] `sendOn` 在 autoComplete 对象内，未放进 source？→ `F-04`

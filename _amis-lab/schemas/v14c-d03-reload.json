@@ -1,0 +1,32 @@
+{
+  "type": "page",
+  "title": "V-14-B  D-03 reload target in onEvent",
+  "body": [
+    {
+      "type": "button",
+      "label": "B1-TARGET",
+      "onEvent": { "click": { "actions": [ { "actionType": "reload", "target": "mainCrud" } ] } }
+    },
+    {
+      "type": "button",
+      "label": "B2-COMPONENTID",
+      "onEvent": { "click": { "actions": [ { "actionType": "reload", "componentId": "mainCrud" } ] } }
+    },
+    {
+      "type": "button",
+      "label": "B3-COMPONENTNAME",
+      "onEvent": { "click": { "actions": [ { "actionType": "reload", "componentName": "mainCrud" } ] } }
+    },
+    {
+      "type": "crud",
+      "id": "mainCrud",
+      "name": "mainCrud",
+      "syncLocation": false,
+      "api": "/api/mock2/sample",
+      "columns": [
+        { "name": "id", "label": "ID" },
+        { "name": "engine", "label": "Engine" }
+      ]
+    }
+  ]
+}
