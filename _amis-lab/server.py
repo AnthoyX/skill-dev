@@ -147,6 +147,13 @@ class Handler(BaseHTTPRequestHandler):
                 'msg': 'ok',
                 'data': OPTIONS,
             }
+        elif wrap == 'array':
+            # amis 标准 status，data 直接是数组（F-07 的「合法」形态）
+            payload = {
+                'status': 1 if fail else 0,
+                'msg': 'mock failure' if fail else 'ok',
+                'data': OPTIONS,
+            }
         elif wrap == 'options':
             # amis 标准 status，但 data 被包了一层 options（用于验证 F-07）
             payload = {

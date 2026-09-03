@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 1.2.5（2026-09-03）
+
+V-15 实测（详见 `docs/verify-lab-260903.yaml` §V-15），`F-07` 由「实战观察」升「已实测」并**重写**（推翻原断言）：
+
+- **V-15 `F-07` 重写（推翻原「实战观察」断言）**：autoComplete 的 source 响应，`data` 为**直接数组** `[...]` 与**含 `options` 键的对象** `{options:[...]}` 在 amis 6.13.0 **都正常渲染**（各 3 项）。原规则称「`{options}` 嵌套会致下拉为空」**被实测推翻**——`{options}` 是合法形态。真正出错的形态是 CRUD 式对象（如 `{rows,items}`、`{count,total}`）：amis 会把对象的**值**当选项遍历，显示 `invalid label` / 数字（实测 4 项：`171 / 171 / invalid label / invalid label`）
+- 同步修正 `P-11`（原「联想下拉为空=响应 data 嵌套 {options}」改为「联想下拉 invalid label/错乱=CRUD 式对象当 data」）、`self-check.md` F-07 自检项、`META.md` 已实测清单补 `F-07`（14→15 条）
+- 归档验证配置 `_amis-lab/schemas/v15a-f07-autocomplete.json`（关键反例：wrap=options 形态）
+
 ## 1.2.4（2026-09-03）
 
 V-14 实测三轮（详见 `docs/verify-lab-260903.yaml` §V-14），三条规则升「已实测」（11→14 条），其中一条**推翻 v1.2.2 的源码推断**：

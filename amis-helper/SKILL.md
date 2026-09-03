@@ -1,7 +1,7 @@
 ---
 name: amis-helper
 description: 百度 amis 低代码框架 JSON Schema 生成。用于手写后台管理页面配置——crud 列表页、弹层新增/编辑/删除、表单校验、字典下拉与远程联想、Excel 导入导出、接口响应适配、组件刷新联动。含高频坑点避坑规则与可复用骨架，产出可直接落地的 amis JSON。
-version: 1.2.4
+version: 1.2.5
 amis-version: "6.x（规则实测基于 6.13.0）"
 allowed-tools: Read, Grep, Glob
 ---

@@ -65,6 +65,7 @@ copy schemas\v3-download-timing.json schema.json
 | `v14a-f01-joinvalues.json` | V-14-A2/A3：多选提交值形态矩阵（joinValues/extractValue/delimiter）+ join 过滤器 |
 | `v14b-f10-adaptor.json` | V-14-A：F-01 默认三组 + F-10 注入式对照（adaptor / adapter / 不写转换） |
 | `v14c-d03-reload.json` | V-14-B：事件动作内 reload 三种定位写法（target / componentId / componentName） |
+| `v15a-f07-autocomplete.json` | V-15：autoComplete 数据源形态——`data` 直接数组与 `{options}` 均渲染（推翻原 F-07 断言），CRUD 式对象当 data 才显示 invalid label |
 
 > `schema.json` 里接口地址写相对路径 `/api/mock2/sample`，和 amis 文档站的写法一致，
 > 验证通过后可直接搬到真实项目，不用改。

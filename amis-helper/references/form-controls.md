@@ -57,8 +57,8 @@
   `来源:实战观察|状态:实战观察|版本:6.x|后果:联想不触发`
 - **`F-04`** `sendOn` 写在 autoComplete 对象**内**（放 source 内失效）
   `来源:实战观察|状态:实战观察|版本:6.x|后果:联想不触发`
-- **`F-07`** 联想响应的 data **直接是数组**，不是 `{options:[...]}` 嵌套
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:下拉为空`
+- **`F-07`** autoComplete 的 source 响应，`data` 可以是**直接数组** `[...]` 或**含 `options` 键的对象** `{options:[...]}`，两种都正常渲染（V-15 实测：数组与 `{options}` 各渲染 3 项）
+  `来源:实战观察+V-15实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:把 CRUD 式对象（如 {rows,items}/{count,total}）当 data → amis 遍历对象的值当选项，显示 invalid label / 数字`
 - `${term}` 是 amis 默认搜索词变量（GET 为 query 参数）；`overlayStyle.width` 控制下拉面板宽度
 - 排查链（联想不生效时按序）：请求未发出（sendOn/autoComplete 配置错）→ 404（路由未部署）→ 401（需登录）→ 下拉为空 / 回退显示原始 value（`adaptor` 未生效或误拼成 `adapter` → `F-10`）→ 下拉项显示 invalid label（`labelField` 与返回字段不匹配）→ 选中值不对（valueField 错）
 

@@ -1,0 +1,23 @@
+{
+  "type": "page",
+  "body": {
+    "type": "form",
+    "wrapWithPanel": false,
+    "title": "F-07 autoComplete",
+    "body": [
+      {
+        "type": "select",
+        "name": "code",
+        "label": "Item",
+        "placeholder": "Search by code or name",
+        "clearable": true,
+        "overlayStyle": { "width": "450px" },
+        "autoComplete": {
+          "method": "get",
+          "url": "/api/mock2/sample?wrap=options&keyword=${term}",
+          "sendOn": "${term != null && term.length >= 3}"
+        }
+      }
+    ]
+  }
+}

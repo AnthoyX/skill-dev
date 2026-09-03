@@ -44,7 +44,7 @@
 - [ ] `sendOn` 在 autoComplete 对象内，未放进 source？→ `F-04`
 - [ ] `asBlob: true` 与 api 的 `dataType: "form-data"` 成对出现？→ `F-05`
 - [ ] 表单项宽度用 `columnRatio`，未用 size / inputClassName / style.width？→ `F-06`
-- [ ] 联想响应 data 直接是数组，非 `{options:[...]}` 嵌套？→ `F-07`
+- [ ] autoComplete 联想响应 data 是数组或 `{options:[...]}`，非 CRUD 式 `{rows,items}`？→ `F-07`
 - [ ] 编辑弹层只读展示用 `static`、提交主键用 `hidden`？→ `F-08`
 - [ ] 联想下拉后端响应是否返回标准 `label`/`value` 字段（协作约束，前端不可独立完成，否则用降级方案）？→ `F-09`
 - [ ] 未使用 adapter 字符串转换（6.13.0 不可用，报 invalid label）？→ `F-10`

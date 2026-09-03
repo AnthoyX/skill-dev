@@ -36,8 +36,8 @@
 ### P-10 联想下拉显示 invalid label
 - 错误：① adapter 字符串转换（amis 6.13.0 不可用）② 返回字段与 labelField 不匹配 → 见 references/form-controls.md §8（`F-10`）、§7（`F-09`）
 
-### P-11 联想下拉为空
-- 错误：响应 data 嵌套为 `{options:[...]}` → 见 references/form-controls.md §3（`F-07`）
+### P-11 联想下拉显示 invalid label / 选项错乱
+- 错误：autoComplete 的 source 响应 `data` 是 CRUD 式对象（如 `{rows,items}`、`{count,total}`）→ amis 把对象的**值**当选项遍历，显示 `invalid label` 或数字 → 见 references/form-controls.md §3（`F-07`）
 
 ### P-12 sendOn 配了但联想请求不发出
 - 错误：`sendOn` 放在 source 对象内 → 见 references/form-controls.md §3（`F-04`）

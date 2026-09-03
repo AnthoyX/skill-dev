@@ -11,6 +11,7 @@ meta:
     V-14-A: _amis-lab/schemas/v14b-f10-adaptor.json
     V-14-A2/A3: _amis-lab/schemas/v14a-f01-joinvalues.json
     V-14-B: _amis-lab/schemas/v14c-d03-reload.json
+    V-15: _amis-lab/schemas/v15a-f07-autocomplete.json
 
 results:
   - id: V-13-A
@@ -84,17 +85,34 @@ results:
       B3 componentName: '新请求 2 次（生效，验证 v1.2.2 补入的等价写法）'
     conclusion: '事件动作内 target 失效；componentId 与 componentName 均可 → D-03 成立'
 
+  - id: V-15
+    rule: F-07（autoComplete 数据源形态）
+    verdict: '推翻原断言，重写为「数组或 {options} 均可」，升「已实测」'
+    design: |
+      单个 autoComplete select，source 指向 /api/mock2/sample，sendOn 限制 term>=3。
+      三种响应形态各测一次（playwright 聚焦输入框→输入 abc→统计 [role=option] 与标签）：
+        A  wrap=array   → data 直接为数组 OPTIONS
+        B  wrap=options → data 为 {options: OPTIONS}
+        C  默认         → data 为 {count,total,rows,items}（CRUD 式）
+    observed:
+      A: ['optCount=3', 'Alpha/Beta 均出现']
+      B: ['optCount=3', 'Alpha/Beta 均出现', '响应体确为 {"status":0,"data":{"options":[...]}}']
+      C: ['optCount=4', '显示 171/171/invalid label/invalid label（amis 遍历对象值当选项）']
+    conclusion:
+      - '原 F-07「data 必须直接数组、{options} 嵌套会空」被推翻：amis 6.13.0 同时接受数组与 {options:[...]}'
+      - '真正出错的形态是 CRUD 式对象 {rows,items}/{count,total}：amis 把对象的值当选项遍历，显示 invalid label'
+
 impact:
-  升为已实测: [D-06, D-09, C-04, A-01, F-01, F-10, D-03]
-  已实测总数: '7 → 14'
+  升为已实测: [D-06, D-09, C-04, A-01, F-01, F-10, D-03, F-07]
+  已实测总数: '14 → 15'
   skill_changes:
     F-01: '彻底重写——v1.2.2 据 select defaultProps joinValues:!0 推断「默认即字符串」被实测推翻；改为「恒为数组，joinValues:false 变对象数组，要字符串用 join 过滤器」'
     F-10: '补实测证据；后果由「invalid label」修正为「下拉为空/回退显示原始 value」；F-03 排查链同步修正因果'
     D-03: '升已实测；componentName 等价写法经实测确认'
     P-22: '修正原「默认 true 拼字符串」错误描述'
-    META: '已实测清单补 F-01/F-10/D-03，共 14 条'
+    META: '已实测清单补 F-01/F-10/D-03/F-07，共 15 条'
+    F-07: '重写——原「{options} 嵌套会空」被推翻；amis 6.13.0 数组与 {options} 均合法，CRUD 式对象当 data 才显示 invalid label'
 
 followup:
-  - F-07 仍未验证（autoComplete 下 data 直接是数组 vs {options:[...]}；本次用 source 测属场景错配，source 的 data.options 合法）
-  - 仍实战观察级：D-02（download 带 token / ajax+blob 方案）/ F-05（asBlob+form-data）/ F-07 / F-09 / F-12 等
-  - 教训（V-13-A 与 V-14-A 同构）：源码 defaultProps ≠ 运行时行为，凡「据源码」级规则都应排实测
+  - 仍实战观察级：D-02（download 带 token / ajax+blob 方案）/ F-05（asBlob+form-data）/ F-09 / F-12 等
+  - 教训（V-13-A / V-14-A / V-15 同构）：源码 defaultProps ≠ 运行时行为，凡「据源码」级规则都应排实测
