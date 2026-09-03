@@ -1,0 +1,63 @@
+# amis-helper skill 审查结论与扩展规划
+skill: "@user_b6f48ab8/amis-helper v1.2.1"
+日期: 2026-09-03
+审查方式: 临时目录安装全文静态审查（%TEMP%\skillhub-review），未安装到正式 skills 目录
+
+# ============ 审查结论 ============
+审查结论:
+  安全面: 干净（无注入/无可执行指令/无外传数据，URL 全占位符，allowed-tools 只读）
+  示例JSON语法: 6/6 合法
+  换行符: 全部 CRLF（仅安装器生成的 _meta.json 为 LF，非 skill 内容）
+  确认Bug:
+    - id: BUG-1
+      级别: Minor
+      位置: SKILL.md:12
+      内容: 规则计数写"32条"，META.md:70 实为 33 条（v1.2.1 新增 D-12 后未同步）
+    - id: BUG-2
+      级别: Minor
+      位置: META.md:76 / CHANGELOG 多处
+      内容: 引用 docs/plan-iteration.md、docs/verify-lab-260901.yaml 等文件，发布包内不存在 docs/ 目录（悬空引用）
+    - id: BUG-3
+      级别: Minor
+      位置: examples/INDEX.md:11
+      内容: dialog-form-add.json 标注 57 行，实际 56 行（其余 5 个文件精确吻合）
+  建议:
+    - allowed-tools 为 Claude Code 工具名，CodeBuddy 不识别（无害）
+    - reload 载体三表重叠（META 总表 / dialog-actions §3 / crud.md §9），作者已知主动保留
+    - dialog-confirm-loading.json 中 api.data 显式 id 映射与 hidden id 字段冗余
+  技术质量: 33 规则逐条清点无误（R×1+C×8+D×12+F×10+A×2），与自检清单 34 项全对齐；核心规则与 amis 6.x 已知行为一致；可信度分级机制（来源|状态|版本|违反后果 + V-x 实测编号）是最大资产
+  总体: 可用，无 Blocker/Major
+
+# ============ 扩展规划 ============
+扩展原则:
+  - 守住准入门槛：新增规则默认"实战观察"，实测后才准入 self-check 清单
+  - 资产是可信度分级机制而非规则数量，扩张时不可放松标准
+
+优先级:
+  P0:
+    - 名称: input-table/combo 正确写法
+      动作: 新增 references 域文件（建议前缀 T-xx 或并入 F 域）
+      理由: P-18 只记录"行内必填不校验"的坑，无正确写法，功能洞最大
+    - 名称: 一致性校验脚本 scripts/check-consistency.py
+      动作: 规则计数自动生成 + ID 悬空引用检测 + INDEX.md 行数核对 + examples JSON 语法校验，纳入发布流程
+      理由: 治本次 3 个 Minor 的根因（BUG-1/2/3 全是文档不同步类）
+  P1:
+    - 树形组件（tree/input-tree/CascaderSelect），字典类业务常见
+    - drawer 场景补全（现仅一句"长内容用 drawer"，D 域对偶缺示例）
+    - 导入错误回显/错误文件下载（现有 dialog-import 只到提交成功，缺下半场）
+  P2:
+    - 布局域（grid/tabs/collapse/wizard 步骤表单）
+    - 弹层间通信（dialog 传参/嵌套弹层数据域继承，现全部单层）
+    - 表单联动深水区（linkage 数据链/跨表单联动/reload 后回显，现仅 data-source §4 三行索引）
+    - 详情页模式（detail/card/list，与只读展示场景契合）
+    - 轮询/静默刷新（interval + silentPolling）
+  P3:
+    - 6.x 小版本差异表（单锚 6.13.0，升级 SDK 时 F-10 类版本敏感行为需 diff）
+    - 公司响应规范 adaptor 模板库（按后端 {code,data} 结构预置变体）
+    - 与后端 skill 联动（Controller 定义 → crud api 配置片段）
+    - i18n / H5 / amis 2.x（维持"明确排除"的克制，低优先级）
+
+后续动作待确认:
+  - 是否安装到 C:\Users\xys43626\.codebuddy\skills（正式目录）
+  - 是否顺手修复 BUG-1/2/3（各一行改动）
+  - 是否先写 P0 校验脚本
