@@ -64,8 +64,12 @@
 }
 ```
 
-- **`D-02`** 文件下载/导出只用 `actionType:"download"`（自带 auth token）；禁止 `ajax`+`responseType:"blob"`+`then`、禁止裸 `fetch()`
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:then 不触发 loading 卡死 / fetch 无 token 401`
+- **`D-02`** 文件下载/导出只用 `actionType:"download"`；禁止 `ajax`+`responseType:"blob"` 后靠 `then` 收尾、禁止裸 `fetch()`
+  `来源:实战观察+V-16实测(2026-09-07)|状态:已实测|版本:6.13.0|后果:then 不触发（拿不到 blob、文件不落盘）/ fetch 无 token 401`
+  实测三点（V-16；lab 配全局 fetcher 注入 `Authorization` 模拟真实项目）：
+  - download **携带 auth token**：浏览器侧请求头与服务端日志双侧确认 `Bearer ...` → 200 blob。**前提**：token 由项目配置的全局 `fetcher` 注入，amis SDK 本身不注入——未配全局 fetcher 时 download 同样无 token
+  - `then` **恒不触发**，与 `responseType` 无关（对照组：普通 JSON 的 ajax 同样不触发）；后续动作必须写进 `onEvent.click.actions` 数组顺序执行（实测正常走完，**不会** loading 卡死——原「卡死」描述已修正）
+  - custom action 内裸 `fetch()` 绕过 amis fetcher → **无 token → 401**（实测）
 - **`D-08`** download 按钮**必须** `loadingOn` + 外层 Service 变量 + `setValue true/false` 配对（download 无内建 loading）；实测顺序 action 会**等待下载完成**（waitSeconds=3 → loading 持续 3 秒）
   `来源:V-3实测(2026-08-31)|状态:已实测|版本:6.13.0|后果:点击无反馈，用户重复点击`
 

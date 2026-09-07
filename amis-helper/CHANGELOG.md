@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 1.2.6（2026-09-07）
+
+V-16 实测（详见 `docs/verify-lab-260907.yaml`），`D-02` 由「实战观察」升「已实测」，并**修正因果与后果**（原断言部分不成立）：
+
+- **V-16-A `D-02` 成立（补重要前提）**：download action **携带 auth token**（浏览器侧 `request-headers` 与服务端日志双侧确认 `Bearer ...` → 200 blob）。**前提**：token 由项目配置的全局 `fetcher` 注入——**amis SDK 本身不注入 `Authorization`**，未配全局 fetcher 时 download 同样无 token（原规则「自带 auth token」易被误解为 amis 天然行为，已补注）
+- **V-16-B 因果修正**：`then` 确实不触发，但**对照组（普通 JSON 的 ajax，无 blob）同样不触发** → `then` 在 6.13.0 **恒不触发、与 `responseType` 无关**（原规则归因于 blob 属错误因果）；且**动作链照常走完**（`setValue` 复位执行、loading 变量回到 false），**「loading 卡死」未复现**。后果由「卡死」改为「拿不到 blob」
+- **V-16-C 裸 `fetch()` 401 成立**：custom action 内裸 `fetch()` 绕过 amis fetcher → 无 token → 实测 401（与 A 组同端点对照：download 200 / 裸 fetch 401）
+- 新增 `P-27`（`then` 字段恒不触发，与 blob 无关）；`P-06` 症状与因果同步修正、`P-07` 补实测；`self-check.md` §4 增补 `then` 自检项；`META.md` 已实测 15→16 条、排障条目 26→27
+
 ## 1.2.5（2026-09-03）
 
 V-15 实测（详见 `docs/verify-lab-260903.yaml` §V-15），`F-07` 由「实战观察」升「已实测」并**重写**（推翻原断言）：

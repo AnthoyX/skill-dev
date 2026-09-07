@@ -66,6 +66,7 @@ copy schemas\v3-download-timing.json schema.json
 | `v14b-f10-adaptor.json` | V-14-A：F-01 默认三组 + F-10 注入式对照（adaptor / adapter / 不写转换） |
 | `v14c-d03-reload.json` | V-14-B：事件动作内 reload 三种定位写法（target / componentId / componentName） |
 | `v15a-f07-autocomplete.json` | V-15：autoComplete 数据源形态——`data` 直接数组与 `{options}` 均渲染（推翻原 F-07 断言），CRUD 式对象当 data 才显示 invalid label |
+| `v16a-d02-download.json` | V-16：D-02 三问——A download 是否带 Authorization / B ajax+blob 的 `then` 是否触发（含非 blob 对照组 D）/ C 裸 `fetch()` 是否 401 |
 
 > `schema.json` 里接口地址写相对路径 `/api/mock2/sample`，和 amis 文档站的写法一致，
 > 验证通过后可直接搬到真实项目，不用改。
@@ -81,10 +82,24 @@ copy schemas\v3-download-timing.json schema.json
 | 参数 | 说明 | 示例 |
 |---|---|---|
 | `waitSeconds` | 延迟多少秒后返回，用来放大 loading / 时序行为 | `/api/mock2/sample?waitSeconds=3` |
+| `requireAuth` | 校验 `Authorization` 头：无该头直接返 401，用于判定请求是否携带 token | `/api/export?requireAuth=1` |
+| `nonstd` | 返非标准结构 `{code:200,data:[...]}` | `?nonstd=1` |
+| `wrap` | `array` = data 直接数组；`options` = data 包一层 `{options:[...]}` | `?wrap=options` |
 
 支持 GET / POST / PUT / DELETE，请求体前 300 字符会打印到终端。
 
 `rows` 和 `items` 都返回，所以 crud 和 form 都能直接用。
+
+每个请求的 `Authorization` 头都会打到终端（`NONE` 或值前 32 字符），配合 `requireAuth=1`
+即可判定「这个 action 到底带不带 token」。
+
+以 `/export` 结尾的路径（或加 `?blob=1`）返回 blob（`application/octet-stream`，31B CSV +
+`Content-Disposition`），供 download action 触发浏览器下载。
+
+> **`index.html` 注入了全局 auth fetcher**：为复现「真实项目配了全局 auth」这一前提，
+> `index.html` 的 embed env 里配了 `fetcher`，给所有 amis 发起的请求统一加
+> `Authorization: Bearer lab-token-xyz`。验证「是否带 token」依赖它；
+> 想验证「amis SDK 默认不带 token」把它删掉即可（实测：无全局 fetcher 时 download 同样无 token）。
 
 ## 怎么观察时序
 

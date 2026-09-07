@@ -19,11 +19,11 @@
 ### P-05 headerToolbar 按钮 loadingOn 读不到变量
 - 错误：loading 变量依赖 crud 内 `setValue`（变量不向外传播）→ 见 references/dialog-actions.md §4（`D-09`）、references/data-source.md §5（`A-01`）
 
-### P-06 blob 导出 loading 卡死
-- 错误：`ajax` + `responseType: "blob"` + `then`（then 不触发）→ 见 references/dialog-actions.md §2（`D-02`）
+### P-06 blob 导出拿不到文件 / 后续动作不执行
+- 实测（V-16，2026-09-07）：`ajax` + `responseType: "blob"` + `then` → `then` 不触发；且 `then` 恒不触发、与 blob 无关，后续动作须写进 `onEvent.click.actions` 数组 → 见 references/dialog-actions.md §2（`D-02`）
 
 ### P-07 custom action 里 fetch() 报 401
-- 错误：裸 `fetch()` 不携带 auth token → 见 references/dialog-actions.md §2（`D-02`）
+- 实测（V-16，2026-09-07）：裸 `fetch()` 绕过 amis fetcher，不携带 auth token → 401 → 见 references/dialog-actions.md §2（`D-02`）
 
 ### P-08 弹层提交按钮配 loadingOn 是死配置
 - 实测（V-1/V-1-D，2026-08-31）：submit 按钮有内建 loading，`loadingOn` 恒 false 也照常转圈；接口失败时 loading 正常结束、弹层保持打开、可重试 → 见 references/dialog-actions.md §1（`D-04`）
@@ -89,3 +89,6 @@
 
 ### P-26 行内（columns）读不到外层 Service 的状态变量
 - 实测（V-13-B，2026-09-03）：`setValue` 到 Service 后 crud **headerToolbar 可实时读到，columns 行内只能拿到初始快照**；`setValue` 不带 `componentId` 则落在按钮自身域，三处全读不到 → 见 references/data-source.md §5（`A-01`）
+
+### P-27 动作里配了 `then` 但后续动作不执行
+- 实测（V-16，2026-09-07）：`then` 作为动作的兄弟字段在 amis 6.13.0 **恒不触发**，与 `responseType` 无关（普通 JSON 的 ajax 对照组同样不触发）；后续动作必须写进 `onEvent.click.actions` 数组顺序执行 → 见 references/dialog-actions.md §2（`D-02`）

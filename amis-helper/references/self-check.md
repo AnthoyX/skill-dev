@@ -33,6 +33,7 @@
 ## 4. 下载 / 导出（loading 要求与弹层提交相反）
 
 - [ ] 文件下载/导出用 `actionType: "download"`，未用 ajax+blob、裸 `fetch()`？→ `D-02`
+- [ ] 后续动作写进 `onEvent.click.actions` 数组，未用动作的 `then` 字段（6.13.0 恒不触发）？→ `D-02`
 - [ ] download 按钮配了 `loadingOn` + 外层 Service 变量 + `setValue true/false` 配对（download 无内建 loading）？→ `D-08`
 - [ ] `setValue` 的 `componentId` 指向外层 Service（loading 变量声明在其 `data`）？→ `D-09`
 
