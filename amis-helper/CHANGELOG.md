@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 1.2.8（2026-09-07）
+
+V-18 实测 CRUD 高频 6 条（详见 `docs/verify-lab-260907.yaml` §V-18），`C-01/C-02/C-03/C-05/C-06/C-07` 全部由「实战观察/据文档/据源码」升「已实测」（17→23 条），其中 **2 条修正原断言**、1 条强化：
+
+- **`C-01` 修正后果**：`perPageAvailable` 写错位置（footerToolbar 组件内）时**切换器照常出现**（原「切换器不出现」不成立），只是自定义项被忽略、回退默认 `[5,10,20,50,100]`；另实测列表不含当前 perPage 时切换器显示「请选择」空值 → `perPageAvailable` 须包含 `defaultParams.perPage`
+- **`C-02` 修正机制**（3 crud × 3 载体定位矩阵，判据=新增请求数）：`componentId` **只认 id**（填 name 恒失效，即使 crud 已同时设 id）；`target` 与按钮顶层 `reload` **认 id 也认 name**（仅设 id 的 crud 用 id 定位同样生效）——原「id 供 componentId、name 供 target/reload」分工不准确，`name` 非 target/reload 的必要条件；「同时设 id+name」仍为稳妥写法（覆盖全部定位方式）
+- **`C-05` 强化（新发现）**：原断言成立且更严重——**一旦 `api.data` 非空，amis 不再自动附加 `page`/`perPage`**（GET/POST 同构，原生 fetcher 与 lab fetcher 双验证）：只映射 `current` 则 `perPage` 丢；`api.data` 只写无关字段 `foo=bar` 时分页参数**全部丢失**（翻页仍只发 `foo=bar`）→ **page 与 perPage 必须都映射**；等价替代：crud 的 `pageField`/`perPageField`（实测生效）
+- **`C-03` 升实测**：加载即写 `?page=1`、翻页写 `?page=N&perPage=M`；带参 URL 打开会按 URL 参数请求（实测 `?page=3` → 请求 `page=3`）
+- **`C-06` 升实测**：未设 `filterTogglable` 时开关按钮 DOM 不存在；已设时可双向开合、筛选栏默认展开
+- **`C-07` 升实测并修正后果**：缺 `*` 时未命中值显示表格空值占位「-」（原「显示空白」）；数字值可匹配字符串 key（id=1 命中 `"1"`）
+- 同步修正：`P-13`（症状改为「选项不对/空值」）、`P-19/P-20/P-21` 补实测、`P-03` 补 C-02 引用；`self-check.md` C-01/C-05 自检项强化；`SKILL.md` F-05 索引行同步 V-17 修正（「成对」→「必设 asBlob」，上轮遗留）
+- 排障条目维持 27 条（新发现并入 P-13/P-20，未新增）；lab 新增 `index-raw.html`（原生 fetcher 对照壳）
+
 ## 1.2.7（2026-09-07）
 
 V-17 实测（详见 `docs/verify-lab-260907.yaml` §V-17），`F-05` 由「实战观察」升「已实测」，并**修正断言**（原「必须成对」不准确）：

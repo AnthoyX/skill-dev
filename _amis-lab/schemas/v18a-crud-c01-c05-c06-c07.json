@@ -1,0 +1,283 @@
+{
+  "type": "page",
+  "title": "V-18 batch A: C-01 / C-05 / C-06 / C-07",
+  "body": [
+    {
+      "type": "panel",
+      "title": "C-01 A: perPageAvailable at CRUD TOP-LEVEL (expect 7/13/29)",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": "/api/lab/c01a",
+        "perPageAvailable": [7, 13, 29],
+        "columns": [
+          { "name": "id", "label": "c01a-id" },
+          { "name": "engine", "label": "c01a-engine" }
+        ],
+        "footerToolbar": ["switch-per-page", "pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-01 B: perPageAvailable INSIDE footerToolbar switch-per-page (custom 7/13/29)",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": "/api/lab/c01b",
+        "columns": [
+          { "name": "id", "label": "c01b-id" },
+          { "name": "engine", "label": "c01b-engine" }
+        ],
+        "footerToolbar": [
+          { "type": "switch-per-page", "perPageAvailable": [7, 13, 29] },
+          "pagination"
+        ]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-01 C: NO perPageAvailable anywhere (control)",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": "/api/lab/c01c",
+        "columns": [
+          { "name": "id", "label": "c01c-id" },
+          { "name": "engine", "label": "c01c-engine" }
+        ],
+        "footerToolbar": ["switch-per-page", "pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-05 A: api.data maps current/size",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": {
+          "method": "get",
+          "url": "/api/lab/c05a",
+          "data": { "current": "${page}", "size": "${perPage}" }
+        },
+        "columns": [
+          { "name": "id", "label": "c05a-id" },
+          { "name": "engine", "label": "c05a-engine" }
+        ],
+        "footerToolbar": ["pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-05 B: NO mapping (control)",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": { "method": "get", "url": "/api/lab/c05b" },
+        "columns": [
+          { "name": "id", "label": "c05b-id" },
+          { "name": "engine", "label": "c05b-engine" }
+        ],
+        "footerToolbar": ["pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-05 C: pageField/perPageField (alternative)",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "pageField": "current",
+        "perPageField": "size",
+        "api": { "method": "get", "url": "/api/lab/c05c" },
+        "columns": [
+          { "name": "id", "label": "c05c-id" },
+          { "name": "engine", "label": "c05c-engine" }
+        ],
+        "footerToolbar": ["pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-06 A: filterTogglable TRUE + filter",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": "/api/lab/c06a",
+        "filterTogglable": true,
+        "filter": {
+          "title": "FILTER-A",
+          "body": [{ "type": "input-text", "name": "kw", "label": "KW-A" }]
+        },
+        "columns": [
+          { "name": "id", "label": "c06a-id" },
+          { "name": "engine", "label": "c06a-engine" }
+        ],
+        "headerToolbar": ["filter-toggler"],
+        "footerToolbar": ["pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-06 B: filterTogglable NOT SET + filter",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": "/api/lab/c06b",
+        "filter": {
+          "title": "FILTER-B",
+          "body": [{ "type": "input-text", "name": "kw", "label": "KW-B" }]
+        },
+        "columns": [
+          { "name": "id", "label": "c06b-id" },
+          { "name": "engine", "label": "c06b-engine" }
+        ],
+        "headerToolbar": ["filter-toggler"],
+        "footerToolbar": ["pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-06 C: filterTogglable TRUE + NO filter (control)",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": "/api/lab/c06c",
+        "filterTogglable": true,
+        "columns": [
+          { "name": "id", "label": "c06c-id" },
+          { "name": "engine", "label": "c06c-engine" }
+        ],
+        "headerToolbar": ["filter-toggler"],
+        "footerToolbar": ["pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-07 A: mapping WITHOUT * fallback",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": "/api/lab/c07a",
+        "columns": [
+          { "name": "id", "label": "c07a-id" },
+          {
+            "name": "engine",
+            "label": "c07a-engine",
+            "type": "mapping",
+            "map": {
+              "Trident - 001": "MAP-ONE",
+              "Trident - 002": "MAP-TWO"
+            }
+          }
+        ],
+        "footerToolbar": ["pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-07 B: mapping WITH * fallback",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": "/api/lab/c07b",
+        "columns": [
+          { "name": "id", "label": "c07b-id" },
+          {
+            "name": "engine",
+            "label": "c07b-engine",
+            "type": "mapping",
+            "map": {
+              "Trident - 001": "MAP-ONE",
+              "Trident - 002": "MAP-TWO",
+              "*": "MAP-OTHER"
+            }
+          }
+        ],
+        "footerToolbar": ["pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-07 C: mapping on NUMBER id with * (numeric key match test)",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": "/api/lab/c07c",
+        "columns": [
+          {
+            "name": "id",
+            "label": "c07c-id",
+            "type": "mapping",
+            "map": {
+              "1": "ID-ONE",
+              "2": "ID-TWO",
+              "*": "ID-OTHER"
+            }
+          },
+          { "name": "engine", "label": "c07c-engine" }
+        ],
+        "footerToolbar": ["pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-05 D: api.data with UNRELATED param foo=bar (control)",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": { "method": "get", "url": "/api/lab/c05d", "data": { "foo": "bar" } },
+        "columns": [
+          { "name": "id", "label": "c05d-id" },
+          { "name": "engine", "label": "c05d-engine" }
+        ],
+        "footerToolbar": ["pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-05 E: api.data maps current ONLY (no size)",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": { "method": "get", "url": "/api/lab/c05e", "data": { "current": "${page}" } },
+        "columns": [
+          { "name": "id", "label": "c05e-id" },
+          { "name": "engine", "label": "c05e-engine" }
+        ],
+        "footerToolbar": ["pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-05 G: POST + api.data maps current/size",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": {
+          "method": "post",
+          "url": "/api/lab/c05g",
+          "data": { "current": "${page}", "size": "${perPage}" }
+        },
+        "columns": [
+          { "name": "id", "label": "c05g-id" },
+          { "name": "engine", "label": "c05g-engine" }
+        ],
+        "footerToolbar": ["pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-05 H: POST + NO api.data (control)",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": { "method": "post", "url": "/api/lab/c05h" },
+        "columns": [
+          { "name": "id", "label": "c05h-id" },
+          { "name": "engine", "label": "c05h-engine" }
+        ],
+        "footerToolbar": ["pagination"]
+      }
+    }
+  ]
+}

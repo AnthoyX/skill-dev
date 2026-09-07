@@ -25,6 +25,8 @@ python server.py 9000
 ```
 _amis-lab/
 ├── index.html      # 渲染壳：加载本地 SDK，读取 schema.json 渲染。一般不用改
+├── index-raw.html  # 同上，但**不注入自定义 fetcher**（用 amis 原生 fetcher）。
+│                   # 出现可疑结果时用它做对照，排除「lab 自定义 fetcher 篡改了行为」
 ├── schema.json     # ★ 验证配置，改这里，刷新浏览器即可
 ├── server.py       # 静态服务 + mock API（带毫秒级时间戳日志）
 ├── schemas/        # 归档的验证配置，需要时复制回 schema.json
@@ -68,6 +70,9 @@ copy schemas\v3-download-timing.json schema.json
 | `v15a-f07-autocomplete.json` | V-15：autoComplete 数据源形态——`data` 直接数组与 `{options}` 均渲染（推翻原 F-07 断言），CRUD 式对象当 data 才显示 invalid label |
 | `v16a-d02-download.json` | V-16：D-02 三问——A download 是否带 Authorization / B ajax+blob 的 `then` 是否触发（含非 blob 对照组 D）/ C 裸 `fetch()` 是否 401 |
 | `v17a-f05-upload.json` | V-17：F-05 上传 2×2 对照——`asBlob` / `dataType:"form-data"` 四种组合，判据为请求是否 multipart 且含 `filename=` |
+| `v18a-crud-c01-c05-c06-c07.json` | V-18-A/C/D：C-01 每页切换器 `perPageAvailable` 位置三对照；C-05 分页参数映射六组（含 `pageField` 替代方案、POST 对照、`foo=bar` 空映射对照）；C-06 `filterTogglable` 三对照；C-07 mapping `*` 兜底三对照 |
+| `v18b-c03-synclocation.json` | V-18-B：C-03 `syncLocation` 默认 vs 显式 `false`——翻页与带参 URL 打开时地址栏是否被污染 |
+| `v18c-c02-idname.json` | V-18-C：C-02 定位矩阵——3 个 crud（仅 id / 仅 name / id+name）× 4 种定位值 × 3 种载体（`componentId` / `target` / 顶层 `reload`），判据为各 crud 新增请求数 |
 
 > `schema.json` 里接口地址写相对路径 `/api/mock2/sample`，和 amis 文档站的写法一致，
 > 验证通过后可直接搬到真实项目，不用改。

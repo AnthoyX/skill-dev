@@ -1,0 +1,33 @@
+{
+  "type": "page",
+  "title": "V-18 batch B: C-03 syncLocation",
+  "body": [
+    {
+      "type": "panel",
+      "title": "C-03 A: syncLocation NOT SET (default true)",
+      "body": {
+        "type": "crud",
+        "api": "/api/lab/c03a",
+        "columns": [
+          { "name": "id", "label": "c03a-id" },
+          { "name": "engine", "label": "c03a-engine" }
+        ],
+        "footerToolbar": ["pagination"]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "C-03 B: syncLocation FALSE",
+      "body": {
+        "type": "crud",
+        "syncLocation": false,
+        "api": "/api/lab/c03b",
+        "columns": [
+          { "name": "id", "label": "c03b-id" },
+          { "name": "engine", "label": "c03b-engine" }
+        ],
+        "footerToolbar": ["pagination"]
+      }
+    }
+  ]
+}

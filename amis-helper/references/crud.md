@@ -22,11 +22,14 @@
 ```
 
 - **`C-01`** `perPageAvailable` 必须放 crud **顶层**，不能放 footerToolbar 内组件里
-  `来源:amis-ui BasicPaginationProps 接口定义+官方issue#6685|状态:据官方文档|版本:6.x|后果:切换器不出现`
-- **`C-02`** **被外部定位 / 刷新的** crud 同时设 `id` 和 `name`：`id` 供事件动作 componentId 定位，`name` 供按钮 target / 按钮顶层 reload / form api reload 定位；无需被定位的 crud（如弹层内选择器）不必设
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:reload 定位不到目标`
+  `来源:V-18实测(2026-09-07)+rest.js renderSwitchPerPage|状态:已实测|版本:6.13.0|后果:切换器照常出现，但自定义项被忽略、回退默认 [5,10,20,50,100]（原「切换器不出现」不成立）；另须包含当前 perPage，否则显示空值`
+- 注：`perPageAvailable` 须包含 `defaultParams.perPage`（缺省 10）；实测配 `[7,13,29]` 而 perPage=10 时切换器显示「请选择」空值
+- **`C-02`** **被外部定位 / 刷新的** crud 同时设 `id` 和 `name`；无需被定位的 crud（如弹层内选择器）不必设
+  `来源:V-18实测(2026-09-07)|状态:已实测|版本:6.13.0|后果:缺 id 则 componentId 定位失效（实测零请求）；缺 name 不影响 target / 顶层 reload`
+  - 实测矩阵（3 crud × 3 载体，判据=新增请求数）：`componentId` **只认 id**（填 name 恒失效，即使该 crud 已同时设 id）；`target` 与按钮顶层 `reload` **认 id 也认 name**（仅设 id 的 crud 用 id 定位同样生效）
+  - 原「id 供 componentId、name 供 target/reload」的分工不准确：`name` 非 target/reload 的必要条件，同时设只为覆盖全部定位方式
 - **`C-03`** `syncLocation: false`，避免分页参数污染 URL
-  `来源:实战观察+crud源码(2026-09-02)|状态:据源码|版本:6.13.0|后果:刷新/分享链接携带分页参数（crud defaultProps 默认 syncLocation:!0，必须显式关）`
+  `来源:V-18实测(2026-09-07)+crud源码(2026-09-02)|状态:已实测|版本:6.13.0|后果:加载即写入 ?page=1、翻页写入 ?page=N&perPage=M；带参 URL 打开会按 URL 参数请求（实测 ?page=3 → 请求 page=3），刷新/分享链接停留在历史分页（crud defaultProps 默认 syncLocation:!0，必须显式关）`
 - `defaultParams.perPage` 设默认每页条数；footerToolbar 内 `switch-per-page` 用字符串简写
 
 ## §2 统计条
@@ -47,7 +50,9 @@
 ```
 
 - **`C-05`** 后端分页字段非 page/perPage 时必须在 api.data 显式映射（crud 数据域自动提供 `${page}`/`${perPage}`/filter 字段）
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:后端收不到分页参数，分页失效`
+  `来源:V-18实测(2026-09-07)|状态:已实测|版本:6.13.0|后果:分页失效——且**一旦 api.data 非空，amis 不再自动附加 page/perPage**，故 page 与 perPage 必须都映射`
+  - 实测（GET 与 POST 同构）：只映射 `current` 则 `perPage` 丢失；`api.data` 只写无关字段 `foo=bar` 时 `page`/`perPage` **全部丢失**（翻页仍只发 `foo=bar`）
+  - 等价替代：crud 上写 `pageField` / `perPageField`（实测 `pageField:current` + `perPageField:size` → 请求 `current=1&size=10`，无需写 api.data）
 - 响应结构非 amis 标准（要求 `{items, total}`）时必须加 adaptor → references/data-source.md §2（`A-02`）
 
 ## §4 headerToolbar 标准布局
@@ -57,7 +62,7 @@
 ```
 
 - **`C-06`** 用 `filter-toggler` 需 crud 设 `"filterTogglable": true`；`columns-toggler`/`drag-toggler` 直接使用无需配置
-  `来源:官方文档(amis 6.13.0)|状态:据官方文档|版本:6.13.0|后果:开关按钮不显示`
+  `来源:V-18实测(2026-09-07)+官方文档(amis 6.13.0)|状态:已实测|版本:6.13.0|后果:开关按钮不显示（实测未设时 headerToolbar 中该按钮 DOM 不存在）；已设时可双向开合，筛选栏默认展开`
   注：`columnsToggled` 属性不存在（v1.1 已修正误记）
 
 ## §5 状态列 mapping
@@ -74,7 +79,7 @@
 ```
 
 - **`C-07`** mapping 必须写 `*` 兜底 key
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:未命中值显示空白`
+  `来源:V-18实测(2026-09-07)|状态:已实测|版本:6.13.0|后果:未命中值显示表格空值占位「-」（实测无 `*` 组未命中单元格为 `-`，有 `*` 组为兜底文案）；数字值可匹配字符串 key（实测 id=1/2 命中 "1"/"2"）`
 
 ## §6 operation 操作列
 

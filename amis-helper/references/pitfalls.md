@@ -11,7 +11,7 @@
 - 错误：提交按钮缺 `close: false`，未在 `submitSucc` 中 `closeDialog` → 见 references/dialog-actions.md §1（`D-01`）
 
 ### P-03 submitSucc 里 reload 了但表格不刷新
-- 错误：事件动作内用 `target` 定位（此处失效），或目标 crud 未设 `id` → 见 references/dialog-actions.md §3（`D-03`）
+- 错误：事件动作内用 `target` 定位（此处失效），或目标 crud 未设 `id`（V-18 实测：`componentId` 只认 id，填 name 恒失效）→ 见 references/dialog-actions.md §3（`D-03`）、references/crud.md §1（`C-02`）
 
 ### P-04 close:false 弹层提交后表格不刷新
 - 实测（V-2，2026-08-31）：`close: false` 下 form api 的 `reload` 不生效，提交也不默认刷新 CRUD，唯一写法见 references/dialog-actions.md §1（`D-05`）
@@ -44,8 +44,8 @@
 
 ## CRUD/列表
 
-### P-13 每页条数切换器不出现
-- 错误：`switch-per-page` 组件写在 footerToolbar 里（属性名 `perPageOptions` 不存在、位置错）→ 见 references/crud.md §1（`C-01`）
+### P-13 每页条数切换器选项不是自定义的 / 显示「请选择」空值
+- 实测（V-18，2026-09-07）：切换器恒出现（原「不出现」不成立）。两种错法：① `perPageAvailable` 写进 footerToolbar 组件内 → 被忽略、回退默认 [5,10,20,50,100]；② 列表不含当前 perPage（缺省 10）→ 显示空值 → 见 references/crud.md §1（`C-01`）
 
 ### P-14 单页时底部统计条不显示
 - 错误：footerToolbar 用 `statistics`（total ≤ perPage 时不渲染，`textContent` 无效）→ 见 references/crud.md §2（`C-04`）
@@ -67,13 +67,13 @@
 ## 补充症状
 
 ### P-19 地址栏被分页参数污染，分享链接带 page/perPage
-- 错误：crud 未设 `syncLocation: false`（crud defaultProps 默认是 `syncLocation:!0`）→ 见 references/crud.md §1（`C-03`）
+- 实测（V-18，2026-09-07）：crud 未设 `syncLocation: false` 时**加载即写 ?page=1**、翻页写 ?page=N&perPage=M；带参 URL 打开会按 URL 参数请求（停在历史分页）→ 见 references/crud.md §1（`C-03`）
 
 ### P-20 翻页数据不变 / 后端收不到分页参数
-- 错误：后端分页字段非 page/perPage，api.data 未显式映射 `${page}` / `${perPage}` → 见 references/crud.md §3（`C-05`）
+- 实测（V-18，2026-09-07）：后端分页字段非 page/perPage 时 api.data 须显式映射 `${page}` / `${perPage}`；且**一旦 api.data 非空，amis 不再自动附加 page/perPage**（GET/POST 同构）——只映射一个另一个就丢，只写无关字段则分页参数全丢。也可用 crud 的 `pageField`/`perPageField` 替代 → 见 references/crud.md §3（`C-05`）
 
-### P-21 状态列部分行显示空白
-- 错误：mapping 缺 `*` 兜底 key，未命中值不渲染 → 见 references/crud.md §5（`C-07`）
+### P-21 状态列部分行显示「-」占位
+- 实测（V-18，2026-09-07）：mapping 缺 `*` 兜底 key，未命中值渲染为表格空值占位「-」（非纯空白）→ 见 references/crud.md §5（`C-07`）
 
 ### P-22 多选下拉提交到后端是数组，后端解析失败
 - 实测（V-14，2026-09-03）：多选提交值**恒为数组**，配 `joinValues` 也变不成字符串；`joinValues:false` 更糟（元素变 `{label,value}` 对象）。要字符串用 `${field|join:','}` → 见 references/form-controls.md §1（`F-01`）

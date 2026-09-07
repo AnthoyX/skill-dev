@@ -10,11 +10,11 @@
 
 ## 2. CRUD / 列表页
 
-- [ ] `perPageAvailable` 放 crud 顶层，不在 footerToolbar 组件内？→ `C-01`
+- [ ] `perPageAvailable` 放 crud 顶层（不在 footerToolbar 组件内），且包含当前 perPage？→ `C-01`
 - [ ] 被外部定位 / 刷新的 crud 同时设了 `id` 和 `name`？→ `C-02`
 - [ ] `syncLocation: false` 已设？→ `C-03`
 - [ ] footerToolbar 统计条用 `tpl`，未用 `statistics`？→ `C-04`
-- [ ] 后端分页字段非 page/perPage 时，api.data 已显式映射 `${page}` / `${perPage}`？→ `C-05`
+- [ ] 后端分页字段非 page/perPage 时，api.data **同时**映射 `${page}` 与 `${perPage}`（只映射一个另一个会丢），或改用 `pageField`/`perPageField`？→ `C-05`
 - [ ] 用 `filter-toggler` 时 crud 已设 `filterTogglable: true`？→ `C-06`
 - [ ] mapping 写了 `*` 兜底 key？→ `C-07`
 - [ ] 操作列 `fixed: "right"` + `width` 固定，行内多按钮收进 `button-group`？→ `C-08`

@@ -1,7 +1,7 @@
 ---
 name: amis-helper
 description: 百度 amis 低代码框架 JSON Schema 生成。用于手写后台管理页面配置——crud 列表页、弹层新增/编辑/删除、表单校验、字典下拉与远程联想、Excel 导入导出、接口响应适配、组件刷新联动。含高频坑点避坑规则与可复用骨架，产出可直接落地的 amis JSON。
-version: 1.2.7
+version: 1.2.8
 amis-version: "6.x（规则实测基于 6.13.0）"
 allowed-tools: Read, Grep, Glob
 ---
@@ -20,7 +20,7 @@ allowed-tools: Read, Grep, Glob
 | D-02/D-08 | 下载导出只用 download，loadingOn+setValue 配对 | references/dialog-actions.md §2 |
 | D-03 | 事件动作 reload 用 componentId | references/dialog-actions.md §3 |
 | F-03 | autoComplete 必须是对象 | references/form-controls.md §3 |
-| F-05 | 上传 asBlob 与 form-data 成对 | references/form-controls.md §5 |
+| F-05 | 上传 input-file 必设 asBlob | references/form-controls.md §5 |
 | F-06 | 宽度只认 columnRatio | references/form-controls.md §6 |
 | A-02 | 非标准响应用 adaptor 转换 | references/data-source.md §2 |
 

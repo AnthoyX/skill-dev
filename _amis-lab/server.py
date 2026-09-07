@@ -132,8 +132,8 @@ class Handler(BaseHTTPRequestHandler):
         nonstd = q.get('nonstd', ['0'])[0] == '1'
         wrap = q.get('wrap', [''])[0]
 
-        log('%s %s  waitSeconds=%s fail=%d nonstd=%d wrap=%s  请求到达'
-            % (self.command, u.path, raw_wait, fail, nonstd, wrap or '-'))
+        log('%s %s?%s  waitSeconds=%s fail=%d nonstd=%d wrap=%s  请求到达'
+            % (self.command, u.path, u.query, raw_wait, fail, nonstd, wrap or '-'))
         log('        Content-Type=%s  bodyLen=%d'
             % (self.headers.get('Content-Type') or '-', len(body)))
         if body:

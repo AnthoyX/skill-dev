@@ -1,4 +1,4 @@
-# V-16 实测结论（amis 6.13.0 本地 lab，2026-09-07）
+# V-16 / V-17 / V-18 实测结论（amis 6.13.0 本地 lab，2026-09-07）
 
 meta:
   date: 2026-09-07
@@ -11,6 +11,7 @@ meta:
     用于复现「真实项目配了全局 auth」这一 D-02 成立的前提。
   schemas:
     V-16: _amis-lab/schemas/v16a-d02-download.json
+    V-18: _amis-lab/schemas/v18a-crud-c01-c05-c06-c07.json / v18b-c03-synclocation.json / v18c-c02-idname.json
 
 results:
   - id: V-16-A
@@ -82,7 +83,92 @@ results:
       导致首轮 A/B/C 三组请求体全是 {}——是 harness 缺陷而非 amis 行为；修复 fetcher
       （FormData/File 原样透传且不设 Content-Type）后重测才得到上表数据。
 
-impact:
+  - id: V-18-A
+    rule: C-01（perPageAvailable 位置）
+    verdict: '后果修正：切换器恒出现；写错位置只是自定义项失效，回退默认 [5,10,20,50,100]'
+    design: |
+      三组 crud：A 顶层 perPageAvailable=[7,13,29]；B 写在 footerToolbar 的
+      switch-per-page 组件内（同样 [7,13,29]）；C 完全不写。判据：点开切换器读 [role=option]。
+    observed:
+      A: ['选项 7/13/29（生效）', '但切换器显示「请选择」——当前 perPage=10 不在列表内']
+      B: ['切换器出现，显示 10', '选项 5/10/20/50/100（自定义被忽略，与 C 组完全一致）']
+      C: ['切换器出现，显示 10', '选项 5/10/20/50/100（默认回退）']
+    conclusion:
+      - '原「切换器不出现」不成立：rest.js renderSwitchPerPage 只读 crud 顶层 perPageAvailable，位置错了只是取不到自定义值'
+      - '附赠发现：perPageAvailable 须包含当前 perPage（缺省 10），否则切换器显示「请选择」空值'
+
+  - id: V-18-B
+    rule: C-05（api 分页字段映射）
+    verdict: '原断言成立并强化：api.data 非空即不再自动附加 page/perPage，两者必须都映射'
+    design: |
+      六组：A GET+data{current,size}；B GET 无 data；C pageField/perPageField；
+      D GET+data{foo:bar}（无关字段对照组）；E GET+data 只映射 current；
+      G POST+data{current,size}；H POST 无 data。判据：请求 URL query / body。
+      全部结果经 index-raw.html（amis 原生 fetcher，无 lab 注入）复核一致。
+    observed:
+      A: ['?current=1&size=10；点第 2 页 → ?current=2&size=10（映射生效，不重复附带 page/perPage）']
+      B: ['?page=1&perPage=10']
+      C: ['?current=1&size=10（pageField/perPageField 等价生效，无需写 api.data）']
+      D: ['?foo=bar——page/perPage 全丢；点第 2 页仍只发 ?foo=bar']
+      E: ['?current=1——perPage 丢失']
+      G_H: ['POST 体 {"current":1,"size":10} vs {"page":1,"perPage":10}（POST 同构）']
+    conclusion:
+      - '关键新发现：一旦 api.data 非空，amis 不再自动附加 page/perPage（GET/POST 同构）——只映射一个另一个必丢'
+      - '等价替代：crud 的 pageField / perPageField'
+      - 'harness 对照：自定义 fetcher 与原生 fetcher 结果一致，排除 lab 干扰'
+
+  - id: V-18-C
+    rule: C-03（syncLocation）
+    verdict: '成立（污染从页面加载即开始，比原描述更早）'
+    design: |
+      两组：A 不写 syncLocation（默认 true）；B 显式 false。判据：加载/翻页后 location.href；
+      另带 ?page=3 直接打开看首个请求。
+    observed:
+      A: ['加载后地址栏即变 ?page=1（未点任何按钮）', '点第 2 页 → ?page=2&perPage=10', '带 ?page=3 打开 → 首个请求 page=3（分享链接停留在历史分页）']
+      B: ['加载与翻页地址栏均保持干净', '首个请求恒 page=1，忽略 URL 参数（?page=1 系 A 组污染）']
+    conclusion: 'crud defaultProps syncLocation:!0 属实且加载即写 URL；显式 false 完全不读不写'
+
+  - id: V-18-D
+    rule: C-06（filter-toggler 与 filterTogglable）
+    verdict: '成立'
+    design: |
+      三组：A filterTogglable:true + filter；B 不设 + filter；C filterTogglable:true + 无 filter。
+      判据：headerToolbar 开关按钮 DOM 存在性、筛选栏 offsetHeight、点击开合。
+    observed:
+      A: ['开关按钮存在，筛选栏初始展开 h=142', '点击 → 筛选栏 DOM 移除；再点 → 恢复（双向开合）']
+      B: ['开关按钮 DOM 不存在（0 个），筛选栏仍直接展示']
+      C: ['开关按钮存在（即使没有 filter）']
+    conclusion: '未设 filterTogglable 时 renderFilterToggler 返回 null；已设时默认展开（filterDefaultVisible 默认 true）、可双向开合'
+
+  - id: V-18-E
+    rule: C-07（mapping * 兜底）
+    verdict: '成立；后果修正为显示「-」占位（非纯空白）'
+    design: |
+      三组（映射源 engine=Trident - 001..010，仅前两条命中）：A map 无 *；B map 有 *；
+      C 映射源换数字 id、key 用字符串 "1"/"2" + "*"。判据：前 4 行单元格文本。
+    observed:
+      A: ['行1/2 = MAP-ONE/MAP-TWO；行3/4 = "-"（表格空值占位）']
+      B: ['行1/2 = MAP-ONE/MAP-TWO；行3/4 = MAP-OTHER']
+      C: ['行1/2 = ID-ONE/ID-TWO（数字值可命中字符串 key）；行3/4 = ID-OTHER']
+    conclusion: '缺 * 时未命中显示「-」（amis 表格空值占位），非纯空白；数字值与字符串 key 可匹配'
+
+  - id: V-18-F
+    rule: C-02（被刷新 crud 的 id / name）
+    verdict: '机制修正：componentId 只认 id；target / 顶层 reload 认 id 也认 name'
+    design: |
+      3 个 crud：X 仅 id=c02id；Y 仅 name=c02name；Z id=zid + name=zname。
+      12 个按钮（3 载体 × 4 定位值）：onEvent componentId / actionType:reload+target /
+      ajax+顶层 reload。判据：每次点击后三个 crud 各自新增请求数（服务端日志计数，逐次差分）。
+    observed:
+      componentId: ['X 填 id ✅ x+1', 'Y 填 name ❌ 0（复跑两次仍 0）', 'Z 填 zid ✅ / 填 zname ❌']
+      target: ['X 填 id ✅', 'Y 填 name ✅', 'Z 填 zid ✅ / 填 zname ✅']
+      reload: ['X 填 id ✅', 'Y 填 name ✅', 'Z 填 zid ✅ / 填 zname ✅']
+    conclusion:
+      - 'componentId 只认 id：仅设 name 的 crud 定位不到（零请求）；即使同时设了 id，填 name 也零请求'
+      - 'target / 顶层 reload 认 id 也认 name：仅设 id 的 crud 用 id 定位同样生效'
+      - '原「id 供 componentId、name 供 target/reload」分工不准确；同时设 id+name 仍是最稳妥写法（覆盖全部载体）'
+
+impact_v16_17:
   升为已实测: [D-02, F-05]
   已实测总数: '15 → 17'
   skill_changes:
@@ -100,8 +186,28 @@ impact:
     server.py: 'mock 记录 Authorization 头；requireAuth=1 无 token 返 401；/api/export 返 blob（application/octet-stream 31B）'
     index.html: '注入模拟项目的全局 fetcher，统一加 Authorization: Bearer lab-token-xyz'
 
+impact_v18:
+  升为已实测: [C-01, C-02, C-03, C-05, C-06, C-07]
+  已实测总数: '17 → 23（33 条中余 10 条实战观察级）'
+  断言修正:
+    C-01: '后果修正——切换器恒出现（原「不出现」不成立），写错位置回退默认 [5,10,20,50,100]；新增「须包含当前 perPage」'
+    C-02: '机制修正——componentId 只认 id；target/顶层 reload 认 id 也认 name（原分工说法不准确）'
+    C-07: '后果修正——未命中显示「-」占位（原「显示空白」）'
+    C-05: '强化——api.data 非空即整体替换默认分页参数，page/perPage 必须都映射；等价替代 pageField/perPageField'
+  其他回流:
+    P-13: '症状改写为「选项不对 / 显示空值」并补实测'
+    P-19/P-20/P-21: '补实测标注（P-20 并入 api.data 整体替换发现，未新增 P 条目，P 维持 27）'
+    P-03: '补 componentId 只认 id 的实测佐证与 C-02 引用'
+    self-check: 'C-01 项补「包含当前 perPage」；C-05 项改为「page 与 perPage 都映射 / 或用 pageField」'
+    SKILL: 'F-05 索引行同步 V-17 修正（「成对」→「必设 asBlob」，上轮遗留）；版本 1.2.8'
+  lab_changes:
+    server.py: '请求日志补打完整 query（V-18 判定 C-05 用）'
+    index-raw.html: '新增——不注入自定义 fetcher 的原生 SDK 对照壳（harness 自证用，V-18-B 已用其复核）'
+
 followup:
-  - 仍实战观察级（共 16 条）：F-09（联想下拉 label/value 协作约束，本轮优先）/ F-03 / F-04 / F-06 / F-08 / A-02 / C-01 / C-02 / C-03 / C-05 / C-06 / C-07 / C-08 / D-07 / D-10 / R-01
-  - 注：历史待办里的「F-12」不存在（F 域仅 F-01~F-10；D-12 已实测），已删除该幽灵条目
-  - 教训（V-13-A / V-14-A / V-15 / V-16-B 同构）：不要凭源码或经验断言机制，必须配对照组实测；
-    本次正是靠「非 blob 对照组」才发现 then 无效与 blob 无关
+  - 仍实战观察级（共 10 条）：F-09 / F-03 / F-04 / F-06 / F-08 / A-02 / C-08 / D-07 / D-10 / R-01
+  - 其中 C-08（操作列 fixed+button-group）与 R-01（配置内禁注释）为规范建议、非可证伪行为断言，保持实战观察即可，不排实测
+  - 下一轮建议：联想域 F-03 / F-04 / F-06（与已实测 F-07 / F-10 同域，一套 mock 全覆盖）+ F-08；随后 A-02 / D-07 / D-10 收尾；F-09 最后（后端协作约束，前端独立验不出）
+  - 教训（V-13~V-18 连续六轮全部修正或强化原断言）：不要凭源码 / 文档 / 经验断言机制，必须配对照组实测。
+    本轮 C-05 靠「foo=bar 无关字段对照组」才发现 api.data 整体替换分页参数；C-02 靠「仅 id 的 crud 对照组」才发现 target 也认 id；
+    C-01 靠「完全不写对照组」才发现切换器默认选项集
