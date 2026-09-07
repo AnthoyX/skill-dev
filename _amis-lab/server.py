@@ -60,6 +60,14 @@ ROWS = [
 ]
 
 
+# 字典类选项，供 nonstd / wrap 两种形态使用
+OPTIONS = [
+    {'label': 'Alpha', 'value': 'a'},
+    {'label': 'Beta', 'value': 'b'},
+    {'label': 'Gamma', 'value': 'g'},
+]
+
+
 def log(msg):
     now = datetime.now().strftime('%H:%M:%S.%f')[:-3]
     print('[%s] %s' % (now, msg), flush=True)
@@ -121,26 +129,80 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             wait = 0.0
 
-        log('%s %s  waitSeconds=%s fail=%d  请求到达' % (self.command, u.path, raw_wait, fail))
+        nonstd = q.get('nonstd', ['0'])[0] == '1'
+        wrap = q.get('wrap', [''])[0]
+
+        log('%s %s  waitSeconds=%s fail=%d nonstd=%d wrap=%s  请求到达'
+            % (self.command, u.path, raw_wait, fail, nonstd, wrap or '-'))
+        log('        Content-Type=%s  bodyLen=%d'
+            % (self.headers.get('Content-Type') or '-', len(body)))
         if body:
-            log('        body=%s' % body.decode('utf-8', 'replace')[:300])
+            log('        body=%s' % body.decode('utf-8', 'replace')[:600])
+
+        # D-02 验证：记录 Authorization 头，支持 requireAuth 校验与 blob 下载分支
+        auth = self.headers.get('Authorization') or ''
+        log('%s %s  Authorization=%s'
+            % (self.command, u.path, (auth[:32] + '...') if auth else 'NONE'))
+
+        require_auth = q.get('requireAuth', ['0'])[0] == '1'
+        if require_auth and not auth:
+            out = json.dumps({'status': 1, 'msg': 'unauthorized: no Authorization'}).encode('utf-8')
+            log('%s %s  -> 401 (requireAuth 且无 Authorization)' % (self.command, u.path))
+            self._send(401, out, 'application/json; charset=utf-8')
+            return
 
         if wait > 0:
             time.sleep(wait)
 
-        payload = {
-            'status': 1 if fail else 0,
-            'msg': 'mock failure' if fail else 'ok',
-            'data': {
-                'count': 171,
-                'total': 171,
-                'rows': ROWS,
-                'items': ROWS,
-            },
-        }
+        # 下载文件分支：返回 blob，供 download action 触发浏览器下载
+        if u.path.endswith('/export') or q.get('blob', ['0'])[0] == '1':
+            payload = b'id,name\n1,alpha\n2,beta\n3,gamma\n'
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/octet-stream')
+            self.send_header('Content-Length', str(len(payload)))
+            self.send_header('Content-Disposition', 'attachment; filename="export.csv"')
+            self._cors()
+            self.end_headers()
+            self.wfile.write(payload)
+            log('%s %s  -> 200 blob %dB (download)' % (self.command, u.path, len(payload)))
+            return
+
+        if nonstd:
+            # 非 amis 标准响应：业务码 code=200，data 直接是数组（模拟国内后端常见结构）
+            payload = {
+                'code': 200,
+                'msg': 'ok',
+                'data': OPTIONS,
+            }
+        elif wrap == 'array':
+            # amis 标准 status，data 直接是数组（F-07 的「合法」形态）
+            payload = {
+                'status': 1 if fail else 0,
+                'msg': 'mock failure' if fail else 'ok',
+                'data': OPTIONS,
+            }
+        elif wrap == 'options':
+            # amis 标准 status，但 data 被包了一层 options（用于验证 F-07）
+            payload = {
+                'status': 1 if fail else 0,
+                'msg': 'mock failure' if fail else 'ok',
+                'data': {'options': OPTIONS},
+            }
+        else:
+            payload = {
+                'status': 1 if fail else 0,
+                'msg': 'mock failure' if fail else 'ok',
+                'data': {
+                    'count': 171,
+                    'total': 171,
+                    'rows': ROWS,
+                    'items': ROWS,
+                },
+            }
         out = json.dumps(payload, ensure_ascii=False).encode('utf-8')
-        log('%s %s  响应 %dB (status=%d)  <<< 此刻前端 loading 应结束'
-            % (self.command, u.path, len(out), payload['status']))
+        log('%s %s  响应 %dB (status=%s)  <<< 此刻前端 loading 应结束'
+            % (self.command, u.path, len(out),
+               payload.get('status', payload.get('code', '-'))))
         self._send(200, out, 'application/json; charset=utf-8')
 
     def _static(self, u):

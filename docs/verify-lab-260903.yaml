@@ -1,0 +1,118 @@
+# V-13 / V-14 实测结论（amis 6.13.0 本地 lab，2026-09-03）
+
+meta:
+  date: 2026-09-03
+  env: _amis-lab（amis 6.13.0 SDK + 本地 mock，waitSeconds 可控延迟；mock 支持 nonstd=1 / wrap=options 开关）
+  method: 改 schema.json → 浏览器交互（playwright eval）→ 比对终端请求日志
+  schemas:
+    V-13-A: _amis-lab/schemas/v13a-d06-submit.json
+    V-13-B: _amis-lab/schemas/v13b-a01-scope.json
+    V-13-C: _amis-lab/schemas/v13c-c04-statistics.json
+    V-14-A: _amis-lab/schemas/v14b-f10-adaptor.json
+    V-14-A2/A3: _amis-lab/schemas/v14a-f01-joinvalues.json
+    V-14-B: _amis-lab/schemas/v14c-d03-reload.json
+    V-15: _amis-lab/schemas/v15a-f07-autocomplete.json
+
+results:
+  - id: V-13-A
+    rule: D-06（禁止 form onEvent.submit）
+    verdict: '成立，升「已实测」'
+    design: |
+      同页两个弹层，form api 分别指向 /api/lab/d06-a、/api/lab/d06-b（均 waitSeconds=1）。
+      A 组 form 配 onEvent.submit（toast EVT-SUBMIT-FIRED）+ submitSucc（toast + closeDialog）；
+      B 组基线只配 submitSucc。
+    observed:
+      A 组: ['EVT-SUBMIT-FIRED 出现', '接口零请求（日志无 d06-a）', 'SUBMITSUCC-FIRED-A 未出现', '弹层保持打开']
+      B 组: ['接口 POST /api/lab/d06-b 到达并响应（21:35:27 → 21:35:28）', 'SUBMITSUCC-FIRED-B 出现', '弹层关闭']
+    note: |
+      源码中事件动作须显式 preventDefault:true 才阻止默认行为，据此 v1.2.2 审查曾推断 D-06 机制描述存疑；
+      实测证明 form 的 submit 事件是例外——配了即接管，无需 preventDefault。
+      **源码推断被实测推翻，以实测为准。**
+
+  - id: V-13-B
+    rule: A-01（Service 数据域）/ D-09（Service 包层方案）
+    verdict: 'A-01 修正后升「已实测」；D-09 方案成立，升「已实测」'
+    design: |
+      Service(data.flag=INIT) → crud。三个观测点：Service 内 tpl、crud headerToolbar tpl、crud columns 行内 tpl。
+      两个按钮：SET-NOCID（setValue 不带 componentId）/ SET-SERVICE（componentId 指向 Service）。
+    observed:
+      初始: ['SERVICE=INIT', 'HDR=INIT', 'CRUD=INIT']
+      SET-NOCID后: ['SERVICE=INIT', 'HDR=INIT', 'CRUD=INIT']
+      SET-SERVICE后: ['SERVICE=FROM-SERVICE', 'HDR=FROM-SERVICE', 'CRUD=INIT']
+    conclusion:
+      - 'setValue 不带 componentId → 落在按钮自身数据域，Service / headerToolbar / 行内全部读不到（比原描述「crud 内 setValue 不向外传播」更严格：根本没进 crud 域）'
+      - 'setValue 指向 Service → Service 与 crud headerToolbar 可读 → D-08 / D-09 的 loadingOn 方案成立'
+      - 'crud columns 行内读不到 Service 变量，只能拿到初始快照 → 行内不得依赖状态变量'
+
+  - id: V-13-C
+    rule: C-04（statistics 单页不渲染）
+    verdict: '成立，升「已实测」'
+    design: |
+      三个 crud。A：adaptor 改 total=5（perPage 默认 10，单页）+ footerToolbar[statistics, pagination]；
+      B：total=171（多页）同配置；C：total=5 但 footerToolbar 用 tpl 替代。
+    observed:
+      A 组: 'DOM 中无 statistics 节点（count=1 只来自 B 组）'
+      B 组: 'statistics 渲染「1/18 共：171 项」'
+      C 组: 'tpl 正常渲染「TPL-Total 5 records, Page 1」'
+    conclusion: '单页时 statistics 整个节点消失，tpl 替代方案在单页下正常 → C-04 成立'
+
+  - id: V-14-A
+    rule: F-01（多选提交值形态）/ F-10（adapter 无效）
+    verdict: 'F-01 重写（推翻 v1.2.2 源码推断）；F-10 成立并修正后果'
+    design: |
+      F-01：五组多选（默认 / joinValues=true / +extractValue / +delimiter:"|" / 仅 extractValue）提交，比对 body；
+            另测 api.data 中 ${m1|join:','} 过滤器。
+      F-10：同一非标准响应（nonstd=1 返回 {code:200,data:[...]}），三组 source：
+            adaptor 注入 FROM-ADAPTOR / adapter 注入 FROM-ADAPTER / 不写转换。
+    observed:
+      F-01 五组 body: ['m1_plain=["a","b"]', 'm2_jointrue=["a","b"]', 'm3=["a","b"]', 'm4=["a","b"]', 'm5=["a","b"]', 'joinValues:false 组=["{label,value}",...]']
+      F-01 过滤器: ['raw=["a","b"]', 'joined_comma="a,b"', 'joined_pipe="a|b"']
+      F-10 显示: ['F10-ADAPTOR=FROM-ADAPTOR', 'F10-ADAPTER=y（原始value，未转换）', 'F10-NONE=z（原始value）']
+    conclusion:
+      - 'F-01：多选提交值恒为数组；joinValues:true / extractValue / delimiter 均无效（默认也是数组）。唯一实质影响的配置是 joinValues:false（变对象数组，禁止）'
+      - 'F-01 要逗号字符串只能用 join 过滤器：${field|join:","}'
+      - 'F-10：adapter 完全无效（与「不写转换」表现一致），adaptor 正常。后果是「下拉为空 / 回退显示原始 value」，非「invalid label」'
+
+  - id: V-14-B
+    rule: D-03（事件动作内 reload 定位写法）
+    verdict: '成立，升「已实测」'
+    design: |
+      crud(id=mainCrud) + 三按钮，onEvent.click.actions 分别用 target / componentId / componentName 指向 mainCrud 做 reload。
+      逐一点击，数新 GET /api/mock2/sample 请求。
+    observed:
+      B1 target: '新请求 0 次（失效）'
+      B2 componentId: '新请求 2 次（生效）'
+      B3 componentName: '新请求 2 次（生效，验证 v1.2.2 补入的等价写法）'
+    conclusion: '事件动作内 target 失效；componentId 与 componentName 均可 → D-03 成立'
+
+  - id: V-15
+    rule: F-07（autoComplete 数据源形态）
+    verdict: '推翻原断言，重写为「数组或 {options} 均可」，升「已实测」'
+    design: |
+      单个 autoComplete select，source 指向 /api/mock2/sample，sendOn 限制 term>=3。
+      三种响应形态各测一次（playwright 聚焦输入框→输入 abc→统计 [role=option] 与标签）：
+        A  wrap=array   → data 直接为数组 OPTIONS
+        B  wrap=options → data 为 {options: OPTIONS}
+        C  默认         → data 为 {count,total,rows,items}（CRUD 式）
+    observed:
+      A: ['optCount=3', 'Alpha/Beta 均出现']
+      B: ['optCount=3', 'Alpha/Beta 均出现', '响应体确为 {"status":0,"data":{"options":[...]}}']
+      C: ['optCount=4', '显示 171/171/invalid label/invalid label（amis 遍历对象值当选项）']
+    conclusion:
+      - '原 F-07「data 必须直接数组、{options} 嵌套会空」被推翻：amis 6.13.0 同时接受数组与 {options:[...]}'
+      - '真正出错的形态是 CRUD 式对象 {rows,items}/{count,total}：amis 把对象的值当选项遍历，显示 invalid label'
+
+impact:
+  升为已实测: [D-06, D-09, C-04, A-01, F-01, F-10, D-03, F-07]
+  已实测总数: '14 → 15'
+  skill_changes:
+    F-01: '彻底重写——v1.2.2 据 select defaultProps joinValues:!0 推断「默认即字符串」被实测推翻；改为「恒为数组，joinValues:false 变对象数组，要字符串用 join 过滤器」'
+    F-10: '补实测证据；后果由「invalid label」修正为「下拉为空/回退显示原始 value」；F-03 排查链同步修正因果'
+    D-03: '升已实测；componentName 等价写法经实测确认'
+    P-22: '修正原「默认 true 拼字符串」错误描述'
+    META: '已实测清单补 F-01/F-10/D-03/F-07，共 15 条'
+    F-07: '重写——原「{options} 嵌套会空」被推翻；amis 6.13.0 数组与 {options} 均合法，CRUD 式对象当 data 才显示 invalid label'
+
+followup:
+  - 仍实战观察级：D-02（download 带 token / ajax+blob 方案）/ F-05（asBlob+form-data）/ F-09 / F-12 等
+  - 教训（V-13-A / V-14-A / V-15 同构）：源码 defaultProps ≠ 运行时行为，凡「据源码」级规则都应排实测

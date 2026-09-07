@@ -38,12 +38,13 @@
   例外：download 导出按钮**必须**配对 → §2（`D-08`）
 - **`D-05`** `close: false` 下 form api 的 `reload` **不生效**、提交也**不默认刷新** CRUD（实测带不带 reload 均无 crud 请求），api 里**不要写 reload**；唯一写法是 `submitSucc` 显式 `{"actionType":"reload","componentId":"..."}`（E 组实证）
   `来源:V-2实测(2026-08-31)|状态:已实测|版本:6.13.0|后果:表格不刷新`
-- **`D-06`** 禁止 form `onEvent.submit`——会拦截 `actionType:"submit"` 的内置调用，接口不发出
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:接口不调用、submitSucc 不触发、loading 卡死`
+- **`D-06`** 禁止 form `onEvent.submit`——会拦截 `actionType:"submit"` 的内置调用，接口不发出（V-13-A 实测 A 组：配了 `onEvent.submit` 后接口零请求、`submitSucc` 不触发、弹层保持打开；B 组基线接口正常发出且弹层关闭）
+  `来源:实战观察+V-13-A实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:接口不调用、submitSucc 不触发、弹层不关闭（点了没反应）`
+  注：源码中事件动作须显式 `preventDefault:true` 才阻止默认行为，但 form 的 submit 事件属于例外——以实测为准
 - **`D-07`** 确认弹层用 `actionType:"dialog"` 自定义弹框，不用 `confirmText`
   `来源:实战观察|状态:实战观察|版本:6.x|后果:原生框无法 loading、无法展示复杂提示`
 - **`D-11`** 弹层默认关闭模式（close 缺省）下 form api 的 `reload`（值为 crud 的 `name`）生效，提交后自动刷新 CRUD；可用 `"reload": "none"` 显式关闭
-  `来源:官方文档(crud「增」章节)|状态:据官方文档,未实测|版本:6.x|后果:行为未经本地实测，注意与 D-05（close:false 下相反）的边界`
+  `来源:官方文档(crud「增」章节)+V-12实测(2026-09-01)|状态:已实测|版本:6.13.0|后果:close 缺省模式下不写 reload 则不刷新；与 D-05（close:false 下不生效）形成对偶边界`
 
 ## §2 下载/导出（唯一正确写法）
 
@@ -63,27 +64,36 @@
 }
 ```
 
-- **`D-02`** 文件下载/导出只用 `actionType:"download"`（自带 auth token）；禁止 `ajax`+`responseType:"blob"`+`then`、禁止裸 `fetch()`
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:then 不触发 loading 卡死 / fetch 无 token 401`
+- **`D-02`** 文件下载/导出只用 `actionType:"download"`；禁止 `ajax`+`responseType:"blob"` 后靠 `then` 收尾、禁止裸 `fetch()`
+  `来源:实战观察+V-16实测(2026-09-07)|状态:已实测|版本:6.13.0|后果:then 不触发（拿不到 blob、文件不落盘）/ fetch 无 token 401`
+  实测三点（V-16；lab 配全局 fetcher 注入 `Authorization` 模拟真实项目）：
+  - download **携带 auth token**：浏览器侧请求头与服务端日志双侧确认 `Bearer ...` → 200 blob。**前提**：token 由项目配置的全局 `fetcher` 注入，amis SDK 本身不注入——未配全局 fetcher 时 download 同样无 token
+  - `then` **恒不触发**，与 `responseType` 无关（对照组：普通 JSON 的 ajax 同样不触发）；后续动作必须写进 `onEvent.click.actions` 数组顺序执行（实测正常走完，**不会** loading 卡死——原「卡死」描述已修正）
+  - custom action 内裸 `fetch()` 绕过 amis fetcher → **无 token → 401**（实测）
 - **`D-08`** download 按钮**必须** `loadingOn` + 外层 Service 变量 + `setValue true/false` 配对（download 无内建 loading）；实测顺序 action 会**等待下载完成**（waitSeconds=3 → loading 持续 3 秒）
   `来源:V-3实测(2026-08-31)|状态:已实测|版本:6.13.0|后果:点击无反馈，用户重复点击`
 
-## §3 reload 定位方式（`D-03` 详情）
+## §3 reload 定位方式（三分）
 
-| 位置 | 属性 | 说明 |
-|------|------|------|
-| 事件动作（`onEvent.actions` 内） | `componentId` | 匹配组件 `id`；**此处** `target` 不生效 |
-| `{"type":"action","actionType":"reload"}` 按钮 | `target` | 值为组件 `name`，**官方支持的合法写法**，勿误判为错误 |
-| form api 配置 | `reload` | 值为组件 `name`；仅默认关闭模式有效（`D-11`，未实测）；`close:false` 下不生效（`D-05`） |
+| 载体 | 属性 | 值 | 规则 |
+|------|------|------|------|
+| 事件动作（`onEvent.actions` 内） | `componentId` | 目标组件 `id` | `D-03`（此处 `target` 失效） |
+| 按钮级 - 刷新专用按钮（actionType:reload） | `target` | 目标组件 `name` | `D-12` |
+| 按钮级 - 业务按钮（ajax/submit 等） | 顶层 `reload` | 目标组件 `name` | `D-12` |
+| form api 配置 | `reload` | 目标组件 `name` | `D-11`（仅 close 缺省生效）/ `D-05`（close:false 不生效） |
 
-- **`D-03`** 事件动作内 reload 必须用 `componentId`（`target` 失效），目标组件必须设 `id`
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:reload 不生效`
+- **`D-03`** 事件动作内 reload 必须用 `componentId`（`target` 失效），目标组件必须设 `id`；等价写法 `componentName`（按 name 定位，实测与 `componentId` 同样生效），统一推荐 `componentId`
+  `来源:实战观察+amis源码+V-14实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:reload 不生效（实测 target 写法零请求；componentId / componentName 均触发刷新）`
+- **`D-12`** 按钮级 reload，按按钮类型分两形态（V-10 实测）:
+  - 刷新专用按钮（`actionType:"reload"`）→ **必须用 `target`**（值 name）；写顶层 `reload` 属性（无 target）**不生效**
+  - 业务按钮（`actionType:"ajax"`/`"submit"` 等）→ 用顶层 `reload` 属性（值 name），操作完成后刷新；`close` 不影响其生效
+  `来源:官方文档(action.md)+V-10实测(2026-09-01)|状态:已实测|版本:6.13.0|后果:reload 不生效`
 - 被刷新 crud 同时设 `id` 和 `name` → references/crud.md §1（`C-02`）
 
 ## §4 Service 包装层（仅无内建 loading 的按钮需要）
 
-- **`D-09`** loading 变量声明在**外层 Service 的 `data`**，`setValue` 的 componentId 指向 service（机制：crud 内 setValue 不向外传播 → references/data-source.md §5 `A-01`）；弹层提交按钮不需要 Service → `D-04`
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:loadingOn 读不到变量恒 false`
+- **`D-09`** loading 变量声明在**外层 Service 的 `data`**，`setValue` 的 `componentId` 指向 Service（机制 → references/data-source.md §5 `A-01`；V-13-B 实测确认 crud headerToolbar 按钮能读到 Service 变量，方案成立）；弹层提交按钮不需要 Service → `D-04`
+  `来源:实战观察+V-13-B实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:loadingOn 读不到变量恒 false`
 
 ```json
 { "type": "service", "id": "pageStateService", "data": { "exportDownloading": false }, "body": [ { "type": "crud", "id": "xxxCrud", "name": "xxxCrud" } ] }

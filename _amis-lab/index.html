@@ -26,7 +26,38 @@ fetch('schema.json?t=' + Date.now())
     var boot = document.getElementById('boot');
     if (boot) boot.remove();
     amisRequire('amis/embed').embed('#root', schema, {}, {
-      // 如需自定义请求器/通知，可在此扩展 env
+      // D-02 验证：模拟真实项目的全局 auth fetcher，向所有 amis 发起的请求注入 Authorization
+      // （裸 fetch() 在 custom action 里绕过它，故无 token —— 这正是 D-02 的区分点）
+      fetcher: function (config) {
+        var c = config.config || {};
+        var headers = {};
+        if (c.headers) { for (var k in c.headers) { headers[k] = c.headers[k]; } }
+        headers['Authorization'] = 'Bearer lab-token-xyz';
+        var method = (config.method || 'get').toUpperCase();
+        var init = { method: method, headers: headers };
+        var d = config.data;
+        var isForm = (typeof FormData !== 'undefined' && d instanceof FormData);
+        if (isForm) {
+          // FormData 必须原样透传，且不要设 Content-Type——让浏览器自动补 multipart boundary
+          delete headers['Content-Type'];
+          delete headers['content-type'];
+        }
+        if (d !== undefined && method !== 'GET' && method !== 'HEAD') {
+          init.body = (isForm || d instanceof Blob || d instanceof File || typeof d === 'string')
+            ? d : JSON.stringify(d);
+        }
+        return fetch(config.url, init).then(function (resp) {
+          if (config.responseType === 'blob' || (c.responseType === 'blob')) {
+            return resp.blob().then(function (b) {
+              return { data: b, status: resp.status, statusText: resp.statusText };
+            });
+          }
+          return resp.text().then(function (txt) {
+            var data; try { data = txt ? JSON.parse(txt) : ''; } catch (e) { data = txt; }
+            return { data: data, status: resp.status, statusText: resp.statusText };
+          });
+        });
+      }
     });
   })
   .catch(function (e) {

@@ -3,8 +3,8 @@
 | 项 | 值 |
 |---|---|
 | 评审对象 | `amis-helper` v1.2 批次 3（拆分 crud-full.json + 新建 examples/INDEX.md + META 计数同步） |
-| 审查文件 | `docs/amis-helper-batch3-split-plan.md`（方案）/ `examples/crud-full.json`（待拆原文） |
-| 评审基准 | `docs/amis-helper-iteration-plan.md`（§5.2 的 1.2.8 / 1.2.9、§4.4、§6.6 Q3） |
+| 审查文件 | `docs/plan-batch3-split.md`（方案）/ `examples/crud-full.json`（待拆原文） |
+| 评审基准 | `docs/plan-iteration.md`（§5.2 的 1.2.8 / 1.2.9、§4.4、§6.6 Q3） |
 | 审查方式 | 全文通读方案 + 310 行原文 + 5 权威规则文件 + 2 保留片段，逐行核对切面守恒与规则 ID 映射 |
 | 评审日期 | 2026-08-31 |
 | 结论 | **需返工**（方案级轻量修正：2 阻塞 + 1 强建议，不改架构） |

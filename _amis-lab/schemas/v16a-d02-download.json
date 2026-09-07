@@ -1,0 +1,68 @@
+{
+  "type": "page",
+  "body": {
+    "type": "service",
+    "id": "pageSvc",
+    "data": { "downloading": false },
+    "body": [
+      {
+        "type": "tpl",
+        "tpl": "D-02 verify  downloading=<span id='dl'>${downloading}</span>"
+      },
+      {
+        "type": "button",
+        "label": "A download",
+        "level": "primary",
+        "loadingOn": "${downloading}",
+        "onEvent": {
+          "click": {
+            "actions": [
+              { "actionType": "setValue", "componentId": "pageSvc", "args": { "value": { "downloading": true } } },
+              { "actionType": "download", "args": { "api": { "method": "get", "url": "/api/export?requireAuth=1" } } },
+              { "actionType": "setValue", "componentId": "pageSvc", "args": { "value": { "downloading": false } } }
+            ]
+          }
+        }
+      },
+      {
+        "type": "button",
+        "label": "B ajax-blob",
+        "loadingOn": "${downloading}",
+        "onEvent": {
+          "click": {
+            "actions": [
+              { "actionType": "setValue", "componentId": "pageSvc", "args": { "value": { "downloading": true } } },
+              { "actionType": "ajax", "api": { "method": "get", "url": "/api/export?requireAuth=1", "responseType": "blob" }, "then": [ { "actionType": "custom", "script": "window.LAB_THEN='FIRED'" }, { "actionType": "toast", "args": { "msg": "AJAX_THEN_FIRED" } } ] },
+              { "actionType": "custom", "script": "window.LAB_CHAIN='DONE'" },
+              { "actionType": "toast", "args": { "msg": "AJAX_CHAIN_DONE" } },
+              { "actionType": "setValue", "componentId": "pageSvc", "args": { "value": { "downloading": false } } }
+            ]
+          }
+        }
+      },
+      {
+        "type": "button",
+        "label": "D ajax-json-ctrl",
+        "onEvent": {
+          "click": {
+            "actions": [
+              { "actionType": "ajax", "api": { "method": "get", "url": "/api/mock2/sample?requireAuth=1" }, "then": [ { "actionType": "custom", "script": "window.LAB_THEN2='FIRED'" } ] },
+              { "actionType": "custom", "script": "window.LAB_CHAIN2='DONE'" }
+            ]
+          }
+        }
+      },
+      {
+        "type": "button",
+        "label": "C fetch-raw",
+        "onEvent": {
+          "click": {
+            "actions": [
+              { "actionType": "custom", "script": "window.labFetchStatus='PENDING';fetch('/api/export?requireAuth=1').then(function(r){window.labFetchStatus=String(r.status);}).catch(function(e){window.labFetchStatus='ERR:'+e;});" }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "type": "page",
+  "title": "V-13-B  A-01 setValue scope",
+  "body": {
+    "type": "service",
+    "id": "pageStateService",
+    "data": { "flag": "INIT" },
+    "body": [
+      { "type": "tpl", "tpl": "SERVICE-flag = ${flag}" },
+      {
+        "type": "crud",
+        "id": "mainCrud",
+        "name": "mainCrud",
+        "syncLocation": false,
+        "api": "/api/mock2/sample",
+        "headerToolbar": [
+          { "type": "tpl", "tpl": "HDR-flag = ${flag}" },
+          {
+            "type": "button",
+            "label": "SET-NOCID",
+            "onEvent": {
+              "click": {
+                "actions": [
+                  { "actionType": "setValue", "args": { "value": { "flag": "FROM-NOCID" } } }
+                ]
+              }
+            }
+          },
+          {
+            "type": "button",
+            "label": "SET-SERVICE",
+            "onEvent": {
+              "click": {
+                "actions": [
+                  { "actionType": "setValue", "componentId": "pageStateService", "args": { "value": { "flag": "FROM-SERVICE" } } }
+                ]
+              }
+            }
+          }
+        ],
+        "columns": [
+          { "name": "id", "label": "ID" },
+          { "name": "engine", "label": "Engine" },
+          { "type": "tpl", "tpl": "CRUD-flag = ${flag}", "label": "InCrudFlag" }
+        ]
+      }
+    ]
+  }
+}

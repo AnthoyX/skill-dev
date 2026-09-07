@@ -1,0 +1,107 @@
+# V-16 实测结论（amis 6.13.0 本地 lab，2026-09-07）
+
+meta:
+  date: 2026-09-07
+  env: _amis-lab（amis 6.13.0 SDK + 本地 mock；mock 新增 requireAuth=1 校验 Authorization 头、/api/export 返回 blob）
+  method: |
+    改 schema.json → playwright eval 点击按钮 → 双侧取证：
+    ① 浏览器侧 playwright request-headers 看 Authorization；
+    ② 服务端日志看实际收到的头与响应。
+    lab 的 index.html 注入了模拟项目的全局 fetcher（统一加 Authorization: Bearer lab-token-xyz），
+    用于复现「真实项目配了全局 auth」这一 D-02 成立的前提。
+  schemas:
+    V-16: _amis-lab/schemas/v16a-d02-download.json
+
+results:
+  - id: V-16-A
+    rule: D-02（download action 是否携带 auth token）
+    verdict: '成立，但带重要前提'
+    design: |
+      按钮 A：onEvent.click.actions = [setValue downloading=true,
+      download(api=/api/export?requireAuth=1), setValue downloading=false]。
+      mock 端点 requireAuth=1 时：无 Authorization → 401；有 → 200 blob（31B CSV）。
+    observed:
+      浏览器侧: 'playwright request-headers 显示 authorization: Bearer lab-token-xyz'
+      服务端: 'GET /api/export  Authorization=Bearer lab-token-xyz...  → 200 blob 31B'
+      对照: '同一端点不带 token → 401（curl 与裸 fetch 均验证）'
+    conclusion:
+      - 'download action 确实携带 auth token —— 前提是项目配置了注入 Authorization 的全局 fetcher'
+      - '**amis SDK 本身不注入 Authorization**：未配全局 fetcher 时 download 同样无 token。原规则「自带 auth token」易被误解为 amis 天然行为，已在 D-02 补注'
+
+  - id: V-16-B
+    rule: D-02（ajax + responseType:blob + then）
+    verdict: '因果修正：then 恒不触发（与 blob 无关）；「loading 卡死」未复现'
+    design: |
+      按钮 B：actions = [setValue true, ajax(api responseType:blob,
+      then:[custom 置 window.LAB_THEN]), custom 置 window.LAB_CHAIN, setValue false]。
+      按钮 D（对照）：同样的 ajax 但**不带** responseType（普通 JSON），同样配 then:[置 window.LAB_THEN2]。
+      观测用 window 标记（不受 toast 自动消失影响）+ tpl 中的 loading 变量。
+    observed:
+      B: ['LAB_THEN=UNSET（then 未触发）', 'LAB_CHAIN=DONE（后续动作正常执行）', 'dl=false（loading 已复位，未卡死）', 'AJAX_CHAIN_DONE toast 出现']
+      D对照: ['LAB_THEN2=UNSET（非 blob 同样不触发）', 'LAB_CHAIN2=DONE']
+    conclusion:
+      - '**then 作为动作的兄弟字段在 amis 6.13.0 恒不触发**，与 responseType:blob 无关（非 blob 对照组同样 UNSET）'
+      - '原规则把「then 不触发」归因于 blob 属错误因果，已修正'
+      - '**「loading 卡死」未复现**：后续动作写进 onEvent.click.actions 数组会顺序执行，loading 正常复位'
+      - '未实测项：blob 响应是否会自动落盘为文件（本次仅确证 then 无效、链可走完）'
+
+  - id: V-16-C
+    rule: D-02（custom action 内裸 fetch()）
+    verdict: '成立'
+    design: |
+      按钮 C：custom action，script 内直接 fetch('/api/export?requireAuth=1')，
+      把 r.status 写入 window.labFetchStatus。
+    observed:
+      结果: 'window.labFetchStatus="401"'
+      网络: '请求 #30 /api/export?requireAuth=1 => [401] Unauthorized'
+    conclusion: '裸 fetch() 绕过 amis fetcher → 无 token → 401。与 V-16-A 形成对照：同一端点，download 200 / 裸 fetch 401'
+
+  - id: V-17
+    rule: F-05（上传 asBlob 与 dataType:form-data 是否必须成对）
+    verdict: '修正断言：真因是缺 asBlob；dataType:form-data 在 asBlob 存在时可省'
+    design: |
+      2×2 对照四个 form，各自 api 指向 /api/lab/f05-a..d：
+        A  asBlob:true + dataType:"form-data"
+        B  asBlob:true（不写 dataType）
+        C  dataType:"form-data"（不写 asBlob）
+        D  都不写
+      统一用 JS DataTransfer 给 4 个 input[type=file] 注入同一文件 f05test.csv，再逐个提交。
+      判据：请求是否 multipart/form-data 且 body 含 filename=。
+    observed:
+      A: ['multipart/form-data', 'bodyLen=290', '含 filename=True']
+      B: ['multipart/form-data', 'bodyLen=290', '含 filename=True']
+      C: ['multipart/form-data', 'bodyLen=14140（文件值=上传响应对象被展开为 form 字段）', '含 filename=False']
+      D: ['text/plain JSON', 'bodyLen=2286（file 值=上传响应对象）', '含 filename=False']
+      自动上传: ['C/D 在选中瞬间即 POST /api/upload/file（multipart 198B，含 filename=True）', 'A/B（有 asBlob）无此请求']
+    conclusion:
+      - '**原「asBlob 与 dataType 必须成对」不准确**：有 asBlob 时 amis 自动把含 File/Blob 的数据转成 multipart，dataType 可省（B 组实证）'
+      - '**真因是缺 asBlob: true**——不写 asBlob 时文件在选中瞬间即上传到默认 receiver /api/upload/file，表单提交体里只剩上传响应对象'
+      - 'dataType:"form-data" 建议保留以求明确，但非必需'
+    note: |
+      本轮先发现 lab 自定义 fetcher 无法透传 FormData（JSON.stringify(FormData) => "{}"），
+      导致首轮 A/B/C 三组请求体全是 {}——是 harness 缺陷而非 amis 行为；修复 fetcher
+      （FormData/File 原样透传且不设 Content-Type）后重测才得到上表数据。
+
+impact:
+  升为已实测: [D-02, F-05]
+  已实测总数: '15 → 17'
+  skill_changes:
+    D-02: '升已实测；补「token 来自项目全局 fetcher、SDK 本身不注入」前提；后果由「then 不触发 loading 卡死」改为「then 不触发（拿不到 blob）」'
+    P-06: '症状由「loading 卡死」改为「拿不到文件 / 后续动作不执行」，补实测并修正因果'
+    P-07: '补实测标注（V-16）'
+    P-27: '新增——then 字段恒不触发（与 responseType 无关），后续动作须写进 onEvent.click.actions 数组'
+    self-check: '§4 增补「未用动作的 then 字段」自检项'
+    META: '已实测清单补 D-02（15→16 条）；排障条目 26→27'
+    F-05: '升已实测并修正——真因是缺 asBlob（文件选中即上传到 receiver），dataType:form-data 在 asBlob 存在时可省（B 组实证）'
+    P-23: '真因由「asBlob 与 dataType 未成对」改为「缺 asBlob: true」'
+  self_check_v17: 'F-05 自检项改为「上传 input-file 设了 asBlob: true」'
+  meta_v17: '已实测清单补 F-05（16→17 条）'
+  lab_changes:
+    server.py: 'mock 记录 Authorization 头；requireAuth=1 无 token 返 401；/api/export 返 blob（application/octet-stream 31B）'
+    index.html: '注入模拟项目的全局 fetcher，统一加 Authorization: Bearer lab-token-xyz'
+
+followup:
+  - 仍实战观察级（共 16 条）：F-09（联想下拉 label/value 协作约束，本轮优先）/ F-03 / F-04 / F-06 / F-08 / A-02 / C-01 / C-02 / C-03 / C-05 / C-06 / C-07 / C-08 / D-07 / D-10 / R-01
+  - 注：历史待办里的「F-12」不存在（F 域仅 F-01~F-10；D-12 已实测），已删除该幽灵条目
+  - 教训（V-13-A / V-14-A / V-15 / V-16-B 同构）：不要凭源码或经验断言机制，必须配对照组实测；
+    本次正是靠「非 blob 对照组」才发现 then 无效与 blob 无关

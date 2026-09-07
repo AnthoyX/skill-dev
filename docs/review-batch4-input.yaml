@@ -1,7 +1,7 @@
 # amis-helper v1.2 批次 4 —— 外部 AI 评审输入（自包含）
 date: 2026-08-31
 评审对象: examples/self-check.md 拟新建方案 + META.md 第 56 行小改 + SSOT 终检脚本设计（文件尚未创建，只评审方案）
-评审基准: docs/amis-helper-iteration-plan.md（§4.4 体量预算 / §5.2 批次 4 / §6.2 自检清单设计）
+评审基准: docs/plan-iteration.md（§4.4 体量预算 / §5.2 批次 4 / §6.2 自检清单设计）
 
 前置事实:
   已完成批次:

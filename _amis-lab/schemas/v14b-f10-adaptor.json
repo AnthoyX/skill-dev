@@ -1,0 +1,35 @@
+{
+  "type": "page",
+  "title": "V-14-A  F-01 / F-10",
+  "body": {
+    "type": "form",
+    "api": { "method": "post", "url": "/api/lab/v14-form" },
+    "body": [
+      {
+        "type": "select", "name": "sDefault", "label": "F01-DEFAULT", "multiple": true, "value": ["a", "b"],
+        "options": [ { "label": "Alpha", "value": "a" }, { "label": "Beta", "value": "b" } ]
+      },
+      {
+        "type": "select", "name": "sJoinFalse", "label": "F01-JOINFALSE", "multiple": true, "joinValues": false, "value": ["a", "b"],
+        "options": [ { "label": "Alpha", "value": "a" }, { "label": "Beta", "value": "b" } ]
+      },
+      {
+        "type": "select", "name": "sExtract", "label": "F01-EXTRACT", "multiple": true, "extractValue": true, "joinValues": false, "value": ["a", "b"],
+        "options": [ { "label": "Alpha", "value": "a" }, { "label": "Beta", "value": "b" } ]
+      },
+      {
+        "type": "select", "name": "sAdaptor", "label": "F10-ADAPTOR", "value": "x",
+        "source": { "method": "get", "url": "/api/lab/v14-dict?nonstd=1", "adaptor": "return { status: 0, data: [{ label: 'FROM-ADAPTOR', value: 'x' }] };" }
+      },
+      {
+        "type": "select", "name": "sAdapter", "label": "F10-ADAPTER", "value": "y",
+        "source": { "method": "get", "url": "/api/lab/v14-dict?nonstd=1", "adapter": "return { status: 0, data: [{ label: 'FROM-ADAPTER', value: 'y' }] };" }
+      },
+      {
+        "type": "select", "name": "sNone", "label": "F10-NONE", "value": "z",
+        "source": { "method": "get", "url": "/api/lab/v14-dict?nonstd=1" }
+      }
+    ],
+    "actions": [ { "type": "submit", "label": "SUBMIT-V14", "level": "primary" } ]
+  }
+}

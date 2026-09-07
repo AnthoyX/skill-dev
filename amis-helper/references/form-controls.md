@@ -8,7 +8,6 @@
 {
   "type": "select", "name": "country", "label": "Country",
   "clearable": true, "multiple": true, "searchable": true,
-  "extractValue": true, "joinValues": true, "delimiter": ",",
   "labelField": "name", "valueField": "name",
   "source": {
     "method": "get",
@@ -18,15 +17,25 @@
 }
 ```
 
-- **`F-01`** 多选必带四件套：`multiple` + `extractValue` + `joinValues` + `delimiter`
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:提交的是数组而非逗号分隔字符串，后端解析失败`
+- **`F-01`** 多选 select 的提交值**恒为数组**（6.13.0 实测五种配置无一产生逗号字符串）：
+  - **禁止 `joinValues: false`**——数组元素会变成 `{label,value}` 整个选项对象
+  - `joinValues: true` / `extractValue` / `delimiter` 对提交值形态**无影响**，非必需（实测五种组合提交值均为 `["a","b"]`）
+  - 后端要逗号分隔字符串时，在 api.data 里用 `join` 过滤器：`"codes": "${field|join:','}"`（实测得到 `a,b`）
+  `来源:实战观察+V-14实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:joinValues:false 时提交对象数组后端解析失败；误以为配了 joinValues 就能拿到字符串`
 - 后端返回 `{code:200,data:[...]}` 非 amis 标准时用 `adaptor` 转 status → references/data-source.md §2（`A-02`）
 - 后端已标准时 source 可字符串简写
 
 ## §2 必填与校验
 
-- **`F-02`** 必填双写：`required: true`（显示红星）+ `validations: {"isRequired": true}`（拦截提交）
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:只有红星不拦截，或只拦截无提示`
+- **`F-02`** 必填只写 `required: true`，**勿双写** `validations: {"isRequired": true}`（幂等无增强，双写唯一差异是多一颗红星，无功能价值）
+  `来源:官方文档+amis-core源码+V-11实测(2026-09-01)|状态:已实测|版本:6.13.0|后果:冗余配置，误导读者以为 required 不拦截`
+  不拦截的已知场景（实测边界）:
+    - ajax 按钮提交跳过「提交前校验阻断」，必填为空仍发请求（F-02 起源；input 的 onChange 实时红字是副作用，非提交阻断）
+    - 值 0 / false 视为有值放行
+    - combo / input-table 行内必填不校验（据 issue#9537，未实测）→ P-18
+  仍拦截的边界（实测修正源码推断）:
+    - 全空格串 ' ' 被拦截（源码推断「不拦截」，实测相反，疑似 required 链对字符串 trim）
+    - hidden / visible:false 字段仍参与校验，值空时误拦截 → P-17
 - 邮箱：`"validations": {"isEmail": true}` + `"validateOnChange": true`；远程唯一性：`"validateApi": "/XXX/XXXX/validate?mail=${email}"`；textarea 长度：`"maxLength": 200`
 
 ## §3 远程联想 select（autoComplete）
@@ -48,10 +57,10 @@
   `来源:实战观察|状态:实战观察|版本:6.x|后果:联想不触发`
 - **`F-04`** `sendOn` 写在 autoComplete 对象**内**（放 source 内失效）
   `来源:实战观察|状态:实战观察|版本:6.x|后果:联想不触发`
-- **`F-07`** 联想响应的 data **直接是数组**，不是 `{options:[...]}` 嵌套
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:下拉为空`
+- **`F-07`** autoComplete 的 source 响应，`data` 可以是**直接数组** `[...]` 或**含 `options` 键的对象** `{options:[...]}`，两种都正常渲染（V-15 实测：数组与 `{options}` 各渲染 3 项）
+  `来源:实战观察+V-15实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:把 CRUD 式对象（如 {rows,items}/{count,total}）当 data → amis 遍历对象的值当选项，显示 invalid label / 数字`
 - `${term}` 是 amis 默认搜索词变量（GET 为 query 参数）；`overlayStyle.width` 控制下拉面板宽度
-- 排查链（联想不生效时按序）：请求未发出（sendOn/autoComplete 配置错）→ 404（路由未部署）→ 401（需登录）→ 下拉项显示 invalid label（两类根因：① adapter 字符串转换不可用 → `F-10`；② 返回字段与 labelField 不匹配）→ 选中值不对（valueField 错）
+- 排查链（联想不生效时按序）：请求未发出（sendOn/autoComplete 配置错）→ 404（路由未部署）→ 401（需登录）→ 下拉为空 / 回退显示原始 value（`adaptor` 未生效或误拼成 `adapter` → `F-10`）→ 下拉项显示 invalid label（`labelField` 与返回字段不匹配）→ 选中值不对（valueField 错）
 
 ## §4 编辑弹层展示字段
 
@@ -74,13 +83,24 @@
 { "api": { "method": "post", "url": "/XXX/XXXX/import", "dataType": "form-data" } }
 ```
 
-- **`F-05`** `asBlob: true`（文件二进制随表单提交）与 api `dataType: "form-data"` 必须成对出现
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:后端收不到文件`
+- **`F-05`** 文件随表单提交的关键是 `asBlob: true`；缺了它，文件在**选中瞬间**即上传到默认 receiver（`/api/upload/file`），表单提交体里没有文件（只有上传响应）
+  `来源:实战观察+V-17实测(2026-09-07)|状态:已实测|版本:6.13.0|后果:后端收不到文件`
+  实测 2×2 对照（V-17，判据：请求是否 multipart 且含 `filename=`）：
+
+  | 组 | 配置 | 请求体 | 含 filename |
+  |---|---|---|---|
+  | A | `asBlob` + `dataType:"form-data"` | multipart 290B | ✅ |
+  | B | **只 `asBlob`**（不写 dataType） | multipart 290B | ✅ |
+  | C | 只 `dataType:"form-data"` | multipart 14140B（文件值=上传响应对象被展开） | ❌ |
+  | D | 都不写 | JSON 2286B（文件值=上传响应对象） | ❌ |
+
+  - **原「asBlob 与 dataType 必须成对」不准确**：`asBlob: true` 存在时 amis **自动**把含 File/Blob 的数据转成 multipart，`dataType: "form-data"` **可省**（B 组实证）
+  - 建议仍保留 `dataType: "form-data"`（更明确，且未选文件时也保持 multipart），但非必需
 
 ## §6 宽度控制（只认 columnRatio）
 
-- **`F-06`** 控制表单项宽度用 `columnRatio`（grid 布局占列数，如 `"columnRatio": 2`）
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:宽度设置不生效`
+- **`F-06`** 控制表单项宽度用 `columnRatio`（form group 内的列宽比例，如 `"columnRatio": 2`；源码 `r.columnRatio || getWidthRate(r.columnClassName,!0)`）
+  `来源:实战观察+form源码(2026-09-02)|状态:据源码|版本:6.13.0|后果:宽度设置不生效`
 
 | 尝试 | 结果 |
 |------|------|
@@ -97,8 +117,10 @@
 
 ## §8 invalid label 陷阱
 
-- **`F-10`** adapter 字符串转换在 amis 6.13.0 不可用（报 invalid label），勿选
-  `来源:实战观察|状态:实战观察|版本:6.13.0|后果:下拉项显示 invalid label`
+- **`F-10`** `adapter` 字符串转换在 amis 6.13.0 **完全无效**，勿选——属性名只有 `adaptor`，见 `A-02`
+  `来源:实战观察+amis源码+V-14实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:数据源不被转换，下拉为空 / 回退显示原始 value`
+  实测对照（同一非标准响应，各自注入可识别 label）：`adaptor` 组正常渲染注入值；`adapter` 组与「不写转换」组表现一致，均回退显示原始 value。
+  注：「invalid label」是 `labelField` 匹配不上的另一类表现，不是拼写错误的直接后果 → 排查链见 §3（`F-03`）
 
 ## §9 常用控件清单
 

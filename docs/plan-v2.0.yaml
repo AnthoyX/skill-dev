@@ -1,0 +1,151 @@
+# amis-helper v2.0 立项评审文档
+# 基准：docs/plan-iteration.md §5.3/§6.4/§6.5/Q4 + META.md + CHANGELOG.md
+# 状态：待评审（评审通过后按批次执行，本任务不改 skill 文件）
+
+meta:
+  文档: docs/plan-v2.0.yaml
+  skill: amis-helper v1.2.0（amis 6.13.0 锚定，32 条权威规则 + P-01~P-16）
+  实验室: _amis-lab/（server.py → localhost:8080，schema.json 唯一实验文件，mock ?waitSeconds=N）
+  硬约束: 评审前不改 amis-helper/ 任何文件；各批次独立可评审落地
+
+# ============================================================
+现状基线:
+  行数实测_2026_09_01:
+    入口层: {SKILL.md: 60, META.md: 60, CHANGELOG.md: 25}
+    references: {crud.md: 107, dialog-actions.md: 100, form-controls.md: 105, data-source.md: 62, pitfalls.md: 59, self-check.md: 54}   # 合计 487
+    examples: {crud-base: 144, dialog-import: 71, bulk-actions-picker: 59, dialog-form-add: 57, dialog-form-edit: 41, dialog-confirm-loading: 41, INDEX.md: 32}   # 合计 445
+    全包合计: 1077
+  预算问题:
+    - 迭代计划 §4.4「全 skill 总量 ≤ 800」在 v1.2 后实际为 1077，超 277 行；v1.2 终检漏核该项
+    - 超支主因：examples 拆分后净增 INDEX.md，且 references 6 文件普遍贴近 120 上限
+    - v2.0 新增 permission + tests 若不修口径，总量将达 ~1500，故预算口径修订列入批次 E
+
+预算口径修订_提案:   # 待评审确认，随批次 E 落入 META.md + CHANGELOG
+  口径: 按加载路径分三级，废弃单一 800 总量
+  L1_规则层: {范围: SKILL.md + META.md + references/*, 上限: 800, 理由: 生成任务的规则知识总量}
+  L2_示例层: {范围: examples/*, 上限: 460, 理由: 按需加载，单文件 ≤150 不变，INDEX ≤40}
+  L3_流程资产: {范围: tests/ + CHANGELOG.md, 上限: 不设, 理由: 不进生成加载路径，是开发期回归资产}
+  核对: {规则层现状: 607_达标, 规则层v2后: ~759_达标, 示例层现状: 445_达标, 示例层v2后: ~447_达标}
+  备选_不推荐: 维持 800 硬上限需砍 2 个弹层示例片段，复用性损失大于预算收益
+
+# ============================================================
+实测项设计:   # 批次 A 执行，沿用 _amis-lab；判定方法同 V-2（比对前端 loading 时刻与终端响应日志 / 提交后新增 GET 日志）
+  - {id: V-4, 项: 权限位注入链路——page 级 data 声明 perm:{add:false} 后，深层按钮 visibleOn 是否能取到（取值域链验证）, 方法: page data 注入权限位 + crud headerToolbar 按钮 visibleOn，翻转布尔观察渲染}
+  - {id: V-5, 项: visibleOn:false 的按钮是完全不渲染还是隐藏占位；与 hidden、disabledOn 三者渲染差异, 方法: 同一按钮三种写法对照，DevTools 查 DOM 存在性}
+  - {id: V-6, 项: 字段级权限关键坑——disabled 的表单项提交时值是否仍随 payload 上送（决定「只读」该用 disabled 还是 static 还是隐藏）, 方法: input-text disabledOn 置真，DevTools 看 POST body 是否含该字段, 源码已证: 'formItem.validate() 无 disabled 跳过逻辑——disabled 字段仍参与校验，若为必填且空值会拦截提交（直接影响 PM-03 推荐写法）', 待实测: 值是否随 payload 上送}
+  - {id: V-7, 项: operation 行内按钮 visibleOn/disabledOn 的行上下文取值（this.xxx 是否可用）, 方法: crud 行内按钮 disabledOn: "this.status === 0"}
+  - {id: V-8, 项: 字段只读态 staticOn 与 disabled 的提交行为差异（static 值是否上送、展示差异）, 方法: 同 V-6 对照组}
+  - {id: V-9, 项: bulkActions 弹层内按钮的权限表达式取值域（弹层内是否还能读到外层 Service 权限位）, 方法: bulk-actions-picker.json 基础上加 visibleOn 引用外层权限位}
+  - {id: V-10, 项: 盲区补测——bulk-actions-picker 的 ajax 按钮 "reload":"mainCrud"（指向 name）是否触发 crud 刷新, 方法: V-2 判定法，选择器提交后看终端是否新增 GET /api/mock2/sample, 追加对照: ['① close:true 与 reload 的时序——先刷新后关窗还是关窗后仍可定位，比对终端 GET 日志与弹层关闭先后', '② actionType:"reload" 的按钮上写 reload 属性是否等价于写 target——决定 D-12 正文是否必须分两列']}
+
+# ============================================================
+批次:
+  A_权限域与盲区实测:
+    定位: 只做实验，skill 文件零改动，产出回填本文档附录节
+    改动文件: [_amis-lab/schema.json(临时实验), docs/plan-v2.0.yaml(附录回填实测结论)]
+    实测项: [V-4, V-5, V-6, V-7, V-8, V-9, V-10]
+    验收标准:
+      - 每项有明确三元结论（生效 / 不生效 / 条件生效+条件）与终端日志或 DOM 证据
+      - V-6 结论直接决定 PM 规则中「字段只读」的推荐写法（disabled vs static vs hidden）
+      - V-10 结论决定批次 B 是否新增 D-12
+    预估行数: skill 0 行；本文档附录 +~60
+    依赖: 无
+
+  B_盲区规则补丁:
+    定位: 消解 examples/INDEX.md 既有注记「reload 盲区 v2.0 待补」
+    改动文件: [references/dialog-actions.md(+D-12 ~6行), references/pitfalls.md(+P-17 ~3行,仅当症状有诊断价值), examples/INDEX.md(注记改规则引用)]
+    方案要点:
+      - D-12 内容：按钮级 reload——合并两种按钮写法，取值均为组件 name（外部评审定夺：不拆 D-13，两种写法机制相同）
+      - D-12 正文**必须写成两列表格**：刷新专用按钮（actionType:"reload"）用 target / 业务按钮（ajax 等）用顶层 reload 属性（操作完成后刷新）。两者时机不同，一句话表述会让 AI 写错属性名
+      - reload 三分边界（一次说清，防再混淆）：form api 内 reload（D-11，close:false 下不生效，待 V-12）/ 事件动作 onEvent.actions 内（D-03，必须 componentId）/ 按钮级（D-12，指向 name，合法性以 V-10 实测为准）
+    验收标准:
+      - INDEX.md 盲区注记消除，bulk-actions-picker 覆盖规则 ID 列补 D-12
+      - reload 三处规则口径互不矛盾，全包检索 reload 无悬空引用
+      - D-12 四要素齐全；V-10 不生效则本批次改为「补 P-17 排障条目」并回滚 D-12 设想
+    预估行数: +~10
+    依赖: 批次A(V-10)
+
+  C_permission域落地:
+    定位: Q4 结论首推的新能力域（后台刚需、坑点密集）
+    改动文件: [references/permission.md(新建~100行), META.md(前缀表+PM-xx行、规则计数), SKILL.md(决策表+4行/触发矩阵+1行/硬规则索引+1行), references/self-check.md(+权限组~8行)]
+    条目切面_PM规则草案:
+      - {id: PM-01, 切面: 按钮级隐藏, 规则: 无权限直接不可见用 visibleOn 引用权限位；决策表别用列——disabledOn 伪装隐藏（用户困惑）、前端删按钮（后端兜底缺失）}
+      - {id: PM-02, 切面: 按钮级禁用, 规则: 有权限语义但条件不满足用 disabledOn + tooltip 说明原因；与 PM-01 的选择标准：看得见 vs 看不见}
+      - {id: PM-03, 切面: 字段级只读, 规则: 以 V-6/V-8 实测定夺推荐写法；关键坑——若 disabled 值不上送，hidden/删字段会导致提交丢数据，必须显式说明取舍}
+      - {id: PM-04, 切面: 权限位注入, 规则: 权限位在 page/Service data 单点声明，表达式统一引用；别用：各按钮散落硬编码字符串（以 V-4 结论确认注入链路）}
+      - {id: PM-05, 切面: 行上下文权限, 规则: operation 行内按钮用 this.xxx 行级权限（以 V-7 结论确认）}
+    决策表新增行_4:
+      - {场景: 无权限按钮, 用什么: visibleOn 权限位, 别用: disabledOn 伪装 / 前端硬删}
+      - {场景: 条件不满足按钮, 用什么: disabledOn+tooltip, 别用: visibleOn（用户不知为何按钮消失）}
+      - {场景: 字段只读, 用什么: 按 V-6 实测结论（disabled 或 static）, 别用: hidden（提交丢数据风险）}
+      - {场景: 权限位管理, 用什么: page/Service data 单点注入, 别用: 表达式散落硬编码}
+    验收标准:
+      - permission.md ≤120 行；PM-01~05 全部带四要素元数据，实测通过项标「已实测+V-x实测(日期)」，未测项保持「实战观察」
+      - 决策表 / 触发矩阵（新增行: 权限/按钮隐藏/字段只读/角色 → permission.md）/ 自检清单三处均有入口
+      - META.md 规则计数同步（32→37 条）；编号无跳号；CRLF
+    预估行数: +~117
+    依赖: 批次A(V-4~V-9)
+
+  D_tests回归用例集:
+    定位: 迭代计划 §6.4 种子清单落地 + 002 挪入（v1.1 验收标尺）
+    改动文件: [tests/README.md(~40行,用例规范+单例格式), tests/cases/001~012.md]
+    单例格式: 沿用 §6.4——需求 / 必须出现的配置特征(断言点) / 必须不出现的反模式 / 覆盖规则ID
+    种子用例:
+      - {id: '001', 名称: 基础列表页(crud+分页+工具栏+统计条), 覆盖: C-01~C-08, 依赖批次: 无}
+      - {id: '002', 名称: 弹层提交loading(从迭代计划§6.4挪入, v1.1验收标尺), 覆盖: D-01/D-03/D-04/R-01, 依赖批次: 无, 备注: 断言含「禁 loadingOn/禁 onEvent.submit/submitSucc 先 reload 后 closeDialog/submitFail 不关窗」}
+      - {id: '003', 名称: 危险操作确认弹层, 覆盖: D-01/D-04/D-05/D-07, 依赖批次: 无}
+      - {id: '004', 名称: 导出/下载按钮, 覆盖: D-02/D-08, 依赖批次: 无, 备注: 断言与002相反——必须有 loadingOn+setValue 配对}
+      - {id: '005', 名称: Excel导入弹层, 覆盖: F-05/D-02/D-04/D-08, 依赖批次: 无}
+      - {id: '006', 名称: 字典下拉+远程联想, 覆盖: F-01/F-03/A-01, 依赖批次: 无}
+      - {id: '007', 名称: 多选表单项提交, 覆盖: F-02/F-04, 依赖批次: 无}
+      - {id: '008', 名称: 弹层内数据选择器(bulkActions), 覆盖: D-10/A-02(/D-12), 依赖批次: B}
+      - {id: '009', 名称: 非标准响应接口对接, 覆盖: A-01/A-02, 依赖批次: 无}
+      - {id: '010', 名称: 刷新其他组件(componentId reload), 覆盖: D-03/D-11/D-12, 依赖批次: B}
+      - {id: '011', 名称: 按钮权限(可见/禁用), 覆盖: PM-01/PM-02/PM-04, 依赖批次: C}
+      - {id: '012', 名称: 字段级权限(只读), 覆盖: PM-03/PM-05, 依赖批次: C}
+    验收标准:
+      - 用例 ≥10（实际 12），每个用例含「必须出现特征」与「必须不出现反模式」两类断言
+      - 覆盖硬规则索引表全部 ID（R-01/C-01/C-04/D-01/D-02/D-03/D-08/F-03/F-05/F-06/A-02）
+      - 用 002 逐条比对 v1.1 后 skill 的 dialog-form-add.json 应 PASS（验收标尺回验）
+      - tests/ 不进触发矩阵加载路径，README 声明其为开发期回归资产
+    预估行数: +~460（L3 流程资产，不计入加载预算）
+    依赖: 001~007/009 无依赖可先行；008/010 依赖B；011/012 依赖C
+
+  E_机制收尾与版本发布:
+    定位: 回流协议 + 预算口径修订 + 发布
+    改动文件: [META.md(+新坑回流协议§~25行+预算口径修订), CHANGELOG.md(2.0.0条目~10行), SKILL.md(version: 2.0.0)]
+    新坑回流协议_设计(§6.5 落地):
+      触发流程_7步: [记录症状与错误写法, 实测确认(_amis-lab,错误确实错/正确确实对), 归域分配ID写入对应reference, 症状不明显时在pitfalls加条目(只写症状+ID指向), 可生成时拦截则更新self-check, 更新tests用例, CHANGELOG记录(版本+日期+触发场景)]
+      条目模板: "#### `PM-xx` 一句话标题 ｜ >来源:x|状态:x|版本:x|后果:x ｜ 规则正文(唯一权威写法)"
+      必填字段: [ID, 来源, 状态, 版本, 违反后果, 权威写法位置]
+      准入标准:
+        - 未经实测只能标「实战观察」，不得进 SKILL.md 硬规则索引层
+        - 实测通过后按 META.md 状态迁移规范升级「已实测」，来源补 V-x实测(日期)
+        - 与既有规则冲突时必须先消解冲突再入库（v1.1 R3 教训）
+      维护成本控制: 四要素单行制，不强制长篇说明；「实战观察」是合法稳态，不催实测
+    验收标准:
+      - 终检四项全 PASS：权威形态唯一性 / 编号连续无跳号 / 悬空引用 0 / 全文 CRLF
+      - 预算核对：规则层 ≤800 且 ~759、示例层 ≤460 且 ~447，核对表写入 META.md
+      - CHANGELOG 2.0.0 完整记录 A~E 各批次 commit
+    预估行数: +~40（规则层内）
+    依赖: 批次B、C、D 全部完成
+
+# ============================================================
+总验收_对照迭代计划§5.3:
+  - 新增 1 个能力域 reference（permission，chart/advanced-interaction/mobile 留 v2.x）≤120 行且有决策表条目
+  - tests/ ≥10 用例且覆盖全部硬规则，双类断言齐全
+  - 回流协议文档化：条目模板+必填字段+准入标准+触发流程（批次 E）
+  - 总量 ≤ 修订后口径（规则层 800 / 示例层 460），单文件上限不破
+  - 度量指标（§7）：回归用例 0→12；「待验证」比例维持 ≤10%（新 PM 规则实测后计入）
+
+风险:
+  - {风险: V-6 实测发现 disabled 值仍上送（与常见框架预期相反）, 应对: PM-03 写法随实测定，批次 C 依赖 A 即为此设计}
+  - {风险: V-10 证实 ajax 按钮 reload 也不生效, 应对: 批次 B 降级为 P-17 排障条目 + INDEX 注记改「禁用」结论}
+  - {风险: 规则层 759 距 800 上限仅余 41 行, 应对: 后续 v2.x 每加一域前先跑预算核对，必要时砍 examples 或提上限需评审}
+  - {风险: permission 域触发词与既有 crud/form 重叠误触发, 应对: 触发矩阵行用「权限/角色/可见/隐藏/禁用」专属关键词}
+
+开放问题_请评审确认:
+  - Q-A: 预算口径修订方案（三级口径）是否接受？替代方案是维持 800 硬上限并砍 2 个弹层示例（不推荐）
+  - Q-B: permission 规则前缀用 PM-xx（pitfalls 已占 P-xx），是否认可？
+  - Q-C: chart / advanced-interaction / mobile 三域延后到 v2.x，v2.0 只做 permission——是否符合 Q4 优先级意图？
+  - Q-D: tests/ 用例是否需要「可执行化」（脚本进 _amis-lab 自动比对），还是保持纯文档断言清单即可？建议先纯文档，执行化留 v2.x

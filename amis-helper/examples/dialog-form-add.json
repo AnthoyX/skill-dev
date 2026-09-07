@@ -37,7 +37,6 @@
           "label": "Item",
           "clearable": true,
           "required": true,
-          "validations": { "isRequired": true },
           "overlayStyle": { "width": "450px" },
           "autoComplete": {
             "method": "get",

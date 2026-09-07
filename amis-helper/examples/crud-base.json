@@ -63,9 +63,6 @@
                 "clearable": true,
                 "multiple": true,
                 "searchable": true,
-                "extractValue": true,
-                "joinValues": true,
-                "delimiter": ",",
                 "labelField": "name",
                 "valueField": "name",
                 "source": {

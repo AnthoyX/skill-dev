@@ -4,7 +4,7 @@
 |---|---|
 | 评审对象 | `amis-helper` v1.2 批次 3 **执行结果**（4 片段拆分 + examples/INDEX.md + 联动改动） |
 | 审查文件 | `examples/crud-base.json` / `dialog-import.json` / `dialog-form-add.json` / `dialog-form-edit.json` / `INDEX.md`；联动 `META.md` / `SKILL.md §4` / `references/crud.md §7` |
-| 评审基准 | `docs/amis-helper-batch3-split-plan.md`（§3 切面 / §8 裁决）、`docs/amis-helper-v1.2-batch3-review.md`（前置评审 B1/B2/B3）、`docs/amis-helper-v1.2-batch3-b3-verify.md`（B3 实测）、32 条权威规则 + P-01~P-16 |
+| 评审基准 | `docs/plan-batch3-split.md`（§3 切面 / §8 裁决）、`docs/review-batch3.md`（前置评审 B1/B2/B3）、`docs/verify-batch3-b3.md`（B3 实测）、32 条权威规则 + P-01~P-16 |
 | 审查方式 | 全文通读 4 新片段 + INDEX + 5 权威规则文件逐条核对；`git show HEAD:examples/crud-full.json` 取回原文做 1:1 等价性比对；CRLF 字节级校验 |
 | 评审日期 | 2026-08-31 |
 | 结论 | **放行**（0 阻塞，3 建议） |

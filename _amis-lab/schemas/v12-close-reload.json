@@ -1,0 +1,64 @@
+{
+  "type": "page",
+  "title": "V-12 close 缺省 form api reload",
+  "body": [
+    {
+      "type": "alert",
+      "level": "info",
+      "body": "<div style='font-size:14px;line-height:1.9'>页面加载时终端会有<b>第一条</b> GET /api/mock2/sample（crud 初始请求）。<br/>点 A/B 组按钮打开弹层 → 填任意值 → 点提交 → <b>看终端是否新增第二条 GET</b>。<br/>每组测完等弹层关闭再测下一组，必要时<b>刷新页面重置计数</b>。</div>",
+      "className": "mb-3"
+    },
+    {
+      "type": "crud",
+      "id": "mainCrud",
+      "name": "mainCrud",
+      "syncLocation": false,
+      "perPageAvailable": [10, 20],
+      "api": "/api/mock2/sample",
+      "columns": [
+        { "name": "id", "label": "ID" },
+        { "name": "engine", "label": "Engine" },
+        { "name": "browser", "label": "Browser" }
+      ]
+    },
+    { "type": "divider" },
+    {
+      "type": "button",
+      "label": "A 组：close 缺省 + api.reload=mainCrud",
+      "level": "primary",
+      "className": "mb-2",
+      "actionType": "dialog",
+      "dialog": {
+        "title": "A 组 - close 缺省",
+        "body": {
+          "type": "form",
+          "api": { "method": "post", "url": "/api/mock2/form/saveForm?waitSeconds=2", "reload": "mainCrud" },
+          "body": [ { "type": "input-text", "name": "x", "label": "随便填" } ]
+        },
+        "actions": [
+          { "type": "button", "label": "取消", "actionType": "close" },
+          { "type": "button", "label": "提交", "level": "primary", "actionType": "submit" }
+        ]
+      }
+    },
+    {
+      "type": "button",
+      "label": "B 组：close:false + api.reload=mainCrud（对照组，V-2 已证不生效）",
+      "level": "danger",
+      "className": "mb-2 ml-2",
+      "actionType": "dialog",
+      "dialog": {
+        "title": "B 组 - close:false 对照",
+        "body": {
+          "type": "form",
+          "api": { "method": "post", "url": "/api/mock2/form/saveForm?waitSeconds=2", "reload": "mainCrud" },
+          "body": [ { "type": "input-text", "name": "x", "label": "随便填" } ]
+        },
+        "actions": [
+          { "type": "button", "label": "取消", "actionType": "close" },
+          { "type": "button", "label": "提交", "level": "primary", "actionType": "submit", "close": false }
+        ]
+      }
+    }
+  ]
+}

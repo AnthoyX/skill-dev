@@ -1,0 +1,49 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "form",
+      "title": "A asBlob + form-data",
+      "wrapWithPanel": true,
+      "api": { "method": "post", "url": "/api/lab/f05-a", "dataType": "form-data" },
+      "body": [
+        { "type": "input-file", "name": "file", "label": "FileA", "asBlob": true, "accept": ".csv" },
+        { "type": "input-text", "name": "note", "label": "Note", "value": "A" }
+      ],
+      "actions": [ { "type": "submit", "label": "SUBMIT-A", "level": "primary" } ]
+    },
+    {
+      "type": "form",
+      "title": "B asBlob only",
+      "wrapWithPanel": true,
+      "api": { "method": "post", "url": "/api/lab/f05-b" },
+      "body": [
+        { "type": "input-file", "name": "file", "label": "FileB", "asBlob": true, "accept": ".csv" },
+        { "type": "input-text", "name": "note", "label": "Note", "value": "B" }
+      ],
+      "actions": [ { "type": "submit", "label": "SUBMIT-B", "level": "primary" } ]
+    },
+    {
+      "type": "form",
+      "title": "C form-data only",
+      "wrapWithPanel": true,
+      "api": { "method": "post", "url": "/api/lab/f05-c", "dataType": "form-data" },
+      "body": [
+        { "type": "input-file", "name": "file", "label": "FileC", "accept": ".csv" },
+        { "type": "input-text", "name": "note", "label": "Note", "value": "C" }
+      ],
+      "actions": [ { "type": "submit", "label": "SUBMIT-C", "level": "primary" } ]
+    },
+    {
+      "type": "form",
+      "title": "D neither",
+      "wrapWithPanel": true,
+      "api": { "method": "post", "url": "/api/lab/f05-d" },
+      "body": [
+        { "type": "input-file", "name": "file", "label": "FileD", "accept": ".csv" },
+        { "type": "input-text", "name": "note", "label": "Note", "value": "D" }
+      ],
+      "actions": [ { "type": "submit", "label": "SUBMIT-D", "level": "primary" } ]
+    }
+  ]
+}

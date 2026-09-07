@@ -23,16 +23,16 @@
 
 - **`C-01`** `perPageAvailable` 必须放 crud **顶层**，不能放 footerToolbar 内组件里
   `来源:amis-ui BasicPaginationProps 接口定义+官方issue#6685|状态:据官方文档|版本:6.x|后果:切换器不出现`
-- **`C-02`** crud 同时设 `id` 和 `name`：`id` 供事件动作 componentId 定位，`name` 供按钮 target / api.reload 定位
+- **`C-02`** **被外部定位 / 刷新的** crud 同时设 `id` 和 `name`：`id` 供事件动作 componentId 定位，`name` 供按钮 target / 按钮顶层 reload / form api reload 定位；无需被定位的 crud（如弹层内选择器）不必设
   `来源:实战观察|状态:实战观察|版本:6.x|后果:reload 定位不到目标`
 - **`C-03`** `syncLocation: false`，避免分页参数污染 URL
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:刷新/分享链接携带分页参数`
+  `来源:实战观察+crud源码(2026-09-02)|状态:据源码|版本:6.13.0|后果:刷新/分享链接携带分页参数（crud defaultProps 默认 syncLocation:!0，必须显式关）`
 - `defaultParams.perPage` 设默认每页条数；footerToolbar 内 `switch-per-page` 用字符串简写
 
 ## §2 统计条
 
 - **`C-04`** footerToolbar 统计条用 `tpl`（如 `"Total ${total} records, Page ${page}"`），不用 `statistics`
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:total<=perPage 单页时 statistics 不渲染、textContent 属性无效`
+  `来源:实战观察+V-13-C实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:total<=perPage 单页时 statistics 整个节点不渲染（实测 total=5 / perPage=10 时 DOM 中无该节点；total=171 时正常渲染「1/18 共：171 项」；同组 tpl 在单页下正常渲染）、textContent 属性无效`
 
 ## §3 api 分页参数映射
 
@@ -97,11 +97,8 @@ filter 字段自动进入 crud 数据域，api.data 用 `${字段名}` 引用；
 
 小数据量（全量字典/配置类列表）用 `"loadDataOnce": true`：首次请求拉全量，后续分页/排序在前端完成。弹层内嵌选择器常用 → examples/bulk-actions-picker.json（`D-10`）。
 
-## §9 刷新机制（权威定义在弹层域 D-03/D-05/D-11）
+## §9 刷新机制（权威定义在弹层域 D-03/D-05/D-11/D-12）
 
-| 场景 | 写法 | 规则 |
-|------|------|------|
-| 事件动作（onEvent.actions 内） | `{"actionType":"reload","componentId":"..."}` | `D-03` |
-| action 类型按钮 | `{"type":"action","actionType":"reload","target":"crudName"}`（官方合法写法） | `D-03` |
-| close:false 弹层提交 | submitSucc 显式 componentId reload（**唯一**写法） | `D-05` |
-| 弹层默认关闭模式（close 缺省） | form api 里加 `"reload": "目标crud的name"`；`"reload":"none"` 可关闭 | `D-11` |
+载体与写法对照表见 references/dialog-actions.md §3（唯一权威表）。要点：
+事件动作用 `componentId`（`D-03`）；按钮级刷新按按钮类型分两形态（`D-12`）；
+弹层 form api 的 `reload` 仅 close 缺省生效（`D-11`），`close:false` 下不生效（`D-05`）。

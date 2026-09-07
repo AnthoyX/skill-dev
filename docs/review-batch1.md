@@ -5,7 +5,7 @@
 | 评审对象 | `amis-helper` v1.2 批次 1（commit `5d3d67c`） |
 | 改造前基线 | v1.1.0（commit `7d1dea8`） |
 | 审查文件 | `references/crud.md` / `dialog-actions.md` / `form-controls.md` / `data-source.md` / `META.md` |
-| 评审基准 | `docs/amis-helper-iteration-plan.md`（§4.3 / §5.1 / §5.2 / §6.1） |
+| 评审基准 | `docs/plan-iteration.md`（§4.3 / §5.1 / §5.2 / §6.1） |
 | 评审日期 | 2026-08-31 |
 | 结论 | **需返工**（阻塞级 6 项） |
 

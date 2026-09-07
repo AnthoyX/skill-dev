@@ -18,12 +18,12 @@
 }
 ```
 
-支持的 method：get/post/put/delete。
+支持的 method：get/post/put/delete/patch。
 
 ## §2 响应结构转换（`A-02`）
 
-- **`A-02`** 非 amis 标准响应必须用 `adaptor` 转换，**统一用官方标准名 `adaptor`**（`adapter` 也能识别但禁止混用）
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:数据不渲染（status 非 0 / 字段名不匹配）`
+- **`A-02`** 非 amis 标准响应必须用 `adaptor` 转换；**`adapter` 是常见误拼，6.13.0 写了完全无效**（源码只识别 `adaptor`；`sdk.js` 里出现的 `adapter` 全是 axios 内部配置，与 amis 无关）
+  `来源:实战观察+amis源码(2026-09-02)|状态:据源码|版本:6.13.0|后果:adapter 拼法静默失效，数据不渲染（status 非 0 / 字段名不匹配）`
 
 amis 标准响应：`{ "status": 0, "data": { "items": [...], "total": n } }`。两个转换位置：
 
@@ -58,5 +58,7 @@ amis 标准响应：`{ "status": 0, "data": { "items": [...], "total": n } }`。
 
 ## §5 CRUD 与 Service 数据域（`A-01`）
 
-- **`A-01`** 外层 Service `data` 声明的变量进入作用域链，内层所有组件可读；**crud 自己 setValue 的变量不向上/向外传播** → loading 等状态变量必须走 Service 包层（写法 → references/dialog-actions.md §4 `D-09`）
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:headerToolbar 按钮 loadingOn 读不到变量恒 false`
+- **`A-01`** 状态变量一律声明在外层 Service 的 `data`，且 `setValue` 的 `componentId` 指向 Service（写法 → references/dialog-actions.md §4 `D-09`）。实测作用域（V-13-B，2026-09-03）：
+  - `setValue` **不带 `componentId`** → 落在**按钮自身**数据域，Service / crud headerToolbar / 行内**全部读不到**
+  - `setValue` 带 `componentId` 指向 Service → Service 与 **crud headerToolbar 可读**（故 `D-08`/`D-09` 的 loadingOn 方案成立），但 **crud columns 行内读不到**（拿到的是初始快照值）
+  `来源:实战观察+V-13-B实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:状态变量读不到 → loadingOn 恒 false；行内若依赖 Service 变量会拿到过期初始值`

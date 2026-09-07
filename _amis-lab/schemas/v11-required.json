@@ -1,0 +1,45 @@
+{
+  "type": "page",
+  "title": "V-11 required 校验链",
+  "body": [
+    {
+      "type": "alert",
+      "level": "info",
+      "body": "<div style='font-size:14px;line-height:1.9'><b>轮次 1</b>：A/B/D 留空、D 不选，点 submit 提交 → 看 A~E 是否都报必填<br/><b>轮次 2</b>：A、B 填任意值，C 填 0，D 选 x，E 填<b>一个空格</b> → 看 E 是否被拦截（验证全空格边界）<br/><b>轮次 3</b>：把 A 清空，点 ajax 提交 → 看是否直接发 POST（F-02 起源）<br/><b>轮次 4</b>：点下面隐藏必填表单的提交 → 看是否被拦截（P-17）</div>",
+      "className": "mb-3"
+    },
+    {
+      "type": "form",
+      "id": "formMain",
+      "api": { "method": "post", "url": "/api/mock2/form/saveForm?waitSeconds=1" },
+      "body": [
+        { "type": "input-text", "name": "a", "label": "A 仅 required:true", "required": true },
+        { "type": "input-text", "name": "b", "label": "B 仅 validations.isRequired", "validations": { "isRequired": true } },
+        { "type": "input-number", "name": "c", "label": "C required:true（填 0 测试放行）", "required": true },
+        { "type": "radios", "name": "d", "label": "D required:true radios（不选验证拦截）", "required": true, "options": [{ "label": "x", "value": "x" }] },
+        { "type": "input-text", "name": "e", "label": "E required:true（填一个空格测试放行）", "required": true }
+      ],
+      "actions": [
+        { "type": "button", "label": "submit 提交（走校验链）", "level": "primary", "actionType": "submit" },
+        { "type": "button", "label": "ajax 提交（疑不走校验链）", "level": "danger", "actionType": "ajax", "api": { "method": "post", "url": "/api/mock2/form/saveForm?waitSeconds=1" } }
+      ]
+    },
+    { "type": "divider" },
+    {
+      "type": "tpl",
+      "tpl": "<div style='color:#999;margin:8px 0'>下面表单只有一个隐藏的必填字段，直接点提交看是否被拦截（P-17 素材）</div>"
+    },
+    {
+      "type": "form",
+      "id": "formHidden",
+      "api": { "method": "post", "url": "/api/mock2/form/saveForm?waitSeconds=1" },
+      "body": [
+        { "type": "input-text", "name": "f", "label": "F 隐藏的必填字段", "required": true, "hidden": true },
+        { "type": "input-text", "name": "g", "label": "G 普通字段（可留空）" }
+      ],
+      "actions": [
+        { "type": "button", "label": "提交（测隐藏必填是否误拦截）", "level": "primary", "actionType": "submit" }
+      ]
+    }
+  ]
+}

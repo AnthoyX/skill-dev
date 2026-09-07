@@ -1,7 +1,7 @@
 # amis-helper v1.2 批次 3 拆分方案（待评审）
 
 > 状态：方案已产出，未执行。本文档供外部 AI 评审 + 确认点裁决使用。
-> 评审基准：`docs/amis-helper-iteration-plan.md`（§5.2 改动项 1.2.8/1.2.9、§4.4 体量预算、§6.6 Q3 决策=选 B 拆分）。
+> 评审基准：`docs/plan-iteration.md`（§5.2 改动项 1.2.8/1.2.9、§4.4 体量预算、§6.6 Q3 决策=选 B 拆分）。
 
 ## 1. 背景与已完成进度
 
@@ -102,7 +102,7 @@ Q4_组合完整性:
 ## 8. 评审裁决与执行修正（2026-08-31，batch3-review + b3-verify）
 
 ```yaml
-评审: docs/amis-helper-v1.2-batch3-review.md（需返工，2 阻塞 + 1 强建议）
+评审: docs/review-batch3.md（需返工，2 阻塞 + 1 强建议）
 裁决落地:
   B1: bulk-actions-picker 映射删 D-11 → INDEX.md 注明「ajax 按钮 reload 指向 name，
       属规则盲区勿套 D-11/D-03，v2.0 待补」
