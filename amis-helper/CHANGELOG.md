@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## 1.2.7（2026-09-07）
+
+V-17 实测（详见 `docs/verify-lab-260907.yaml` §V-17），`F-05` 由「实战观察」升「已实测」，并**修正断言**（原「必须成对」不准确）：
+
+- **2×2 对照实测**（判据：请求是否 multipart 且含 `filename=`）：
+
+  | 组 | 配置 | 请求体 | 含 filename |
+  |---|---|---|---|
+  | A | `asBlob` + `dataType:"form-data"` | multipart 290B | ✅ |
+  | B | **只 `asBlob`**（不写 dataType） | multipart 290B | ✅ |
+  | C | 只 `dataType:"form-data"` | multipart 14140B（文件值=上传响应对象被展开） | ❌ |
+  | D | 都不写 | JSON 2286B | ❌ |
+
+- **真因是缺 `asBlob: true`**：不写 `asBlob` 时，文件在**选中瞬间**即上传到默认 receiver `/api/upload/file`（实测 multipart 含 filename，198B），表单提交体里只剩上传响应对象——这才是「后端收不到文件」的机制
+- **原「`asBlob` 与 `dataType` 必须成对」不准确**：`asBlob` 存在时 amis **自动**把含 File/Blob 的数据转成 multipart，`dataType: "form-data"` **可省**（B 组实证）；仍建议保留以求明确，但非必需
+- 同步修正 `P-23`（真因改为「缺 asBlob」）、`self-check.md` F-05 自检项；`META.md` 已实测 16→17 条
+
 ## 1.2.6（2026-09-07）
 
 V-16 实测（详见 `docs/verify-lab-260907.yaml`），`D-02` 由「实战观察」升「已实测」，并**修正因果与后果**（原断言部分不成立）：

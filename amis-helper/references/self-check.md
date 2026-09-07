@@ -43,7 +43,7 @@
 - [ ] 必填字段配了 `required: true`（无需双写 `validations.isRequired`）？→ `F-02`
 - [ ] `autoComplete` 是对象（method/url/sendOn 都在内），非 `true` + 外部 source？→ `F-03`
 - [ ] `sendOn` 在 autoComplete 对象内，未放进 source？→ `F-04`
-- [ ] `asBlob: true` 与 api 的 `dataType: "form-data"` 成对出现？→ `F-05`
+- [ ] 上传 input-file 设了 `asBlob: true`（文件才随表单提交；否则选中即上传到 receiver）？→ `F-05`
 - [ ] 表单项宽度用 `columnRatio`，未用 size / inputClassName / style.width？→ `F-06`
 - [ ] autoComplete 联想响应 data 是数组或 `{options:[...]}`，非 CRUD 式 `{rows,items}`？→ `F-07`
 - [ ] 编辑弹层只读展示用 `static`、提交主键用 `hidden`？→ `F-08`

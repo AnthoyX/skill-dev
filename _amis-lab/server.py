@@ -134,8 +134,10 @@ class Handler(BaseHTTPRequestHandler):
 
         log('%s %s  waitSeconds=%s fail=%d nonstd=%d wrap=%s  请求到达'
             % (self.command, u.path, raw_wait, fail, nonstd, wrap or '-'))
+        log('        Content-Type=%s  bodyLen=%d'
+            % (self.headers.get('Content-Type') or '-', len(body)))
         if body:
-            log('        body=%s' % body.decode('utf-8', 'replace')[:500])
+            log('        body=%s' % body.decode('utf-8', 'replace')[:600])
 
         # D-02 验证：记录 Authorization 头，支持 requireAuth 校验与 blob 下载分支
         auth = self.headers.get('Authorization') or ''

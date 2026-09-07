@@ -79,7 +79,7 @@
 - 实测（V-14，2026-09-03）：多选提交值**恒为数组**，配 `joinValues` 也变不成字符串；`joinValues:false` 更糟（元素变 `{label,value}` 对象）。要字符串用 `${field|join:','}` → 见 references/form-controls.md §1（`F-01`）
 
 ### P-23 上传 Excel 后端收不到文件
-- 错误：`asBlob: true` 与 api 的 `dataType: "form-data"` 未成对出现 → 见 references/form-controls.md §5（`F-05`）
+- 实测（V-17，2026-09-07）：真因是**缺 `asBlob: true`**——文件在选中瞬间就被上传到默认 receiver `/api/upload/file`，表单提交体里没有文件（只有上传响应对象）；`dataType: "form-data"` 在 `asBlob` 存在时**可省**（amis 自动转 multipart）→ 见 references/form-controls.md §5（`F-05`）
 
 ### P-24 编辑提交后端报缺主键 / 只读字段被误改
 - 错误：主键未用 `hidden` 承载、只读字段未用 `static` 展示 → 见 references/form-controls.md §4（`F-08`）

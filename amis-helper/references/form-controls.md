@@ -83,8 +83,19 @@
 { "api": { "method": "post", "url": "/XXX/XXXX/import", "dataType": "form-data" } }
 ```
 
-- **`F-05`** `asBlob: true`（文件二进制随表单提交）与 api `dataType: "form-data"` 必须成对出现
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:后端收不到文件`
+- **`F-05`** 文件随表单提交的关键是 `asBlob: true`；缺了它，文件在**选中瞬间**即上传到默认 receiver（`/api/upload/file`），表单提交体里没有文件（只有上传响应）
+  `来源:实战观察+V-17实测(2026-09-07)|状态:已实测|版本:6.13.0|后果:后端收不到文件`
+  实测 2×2 对照（V-17，判据：请求是否 multipart 且含 `filename=`）：
+
+  | 组 | 配置 | 请求体 | 含 filename |
+  |---|---|---|---|
+  | A | `asBlob` + `dataType:"form-data"` | multipart 290B | ✅ |
+  | B | **只 `asBlob`**（不写 dataType） | multipart 290B | ✅ |
+  | C | 只 `dataType:"form-data"` | multipart 14140B（文件值=上传响应对象被展开） | ❌ |
+  | D | 都不写 | JSON 2286B（文件值=上传响应对象） | ❌ |
+
+  - **原「asBlob 与 dataType 必须成对」不准确**：`asBlob: true` 存在时 amis **自动**把含 File/Blob 的数据转成 multipart，`dataType: "form-data"` **可省**（B 组实证）
+  - 建议仍保留 `dataType: "form-data"`（更明确，且未选文件时也保持 multipart），但非必需
 
 ## §6 宽度控制（只认 columnRatio）
 

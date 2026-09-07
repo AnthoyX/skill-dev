@@ -67,6 +67,7 @@ copy schemas\v3-download-timing.json schema.json
 | `v14c-d03-reload.json` | V-14-B：事件动作内 reload 三种定位写法（target / componentId / componentName） |
 | `v15a-f07-autocomplete.json` | V-15：autoComplete 数据源形态——`data` 直接数组与 `{options}` 均渲染（推翻原 F-07 断言），CRUD 式对象当 data 才显示 invalid label |
 | `v16a-d02-download.json` | V-16：D-02 三问——A download 是否带 Authorization / B ajax+blob 的 `then` 是否触发（含非 blob 对照组 D）/ C 裸 `fetch()` 是否 401 |
+| `v17a-f05-upload.json` | V-17：F-05 上传 2×2 对照——`asBlob` / `dataType:"form-data"` 四种组合，判据为请求是否 multipart 且含 `filename=` |
 
 > `schema.json` 里接口地址写相对路径 `/api/mock2/sample`，和 amis 文档站的写法一致，
 > 验证通过后可直接搬到真实项目，不用改。
