@@ -101,6 +101,7 @@ impact:
     index.html: '注入模拟项目的全局 fetcher，统一加 Authorization: Bearer lab-token-xyz'
 
 followup:
-  - 仍实战观察级：F-09（联想下拉 label/value 协作约束）/ F-12
+  - 仍实战观察级（共 16 条）：F-09（联想下拉 label/value 协作约束，本轮优先）/ F-03 / F-04 / F-06 / F-08 / A-02 / C-01 / C-02 / C-03 / C-05 / C-06 / C-07 / C-08 / D-07 / D-10 / R-01
+  - 注：历史待办里的「F-12」不存在（F 域仅 F-01~F-10；D-12 已实测），已删除该幽灵条目
   - 教训（V-13-A / V-14-A / V-15 / V-16-B 同构）：不要凭源码或经验断言机制，必须配对照组实测；
     本次正是靠「非 blob 对照组」才发现 then 无效与 blob 无关
