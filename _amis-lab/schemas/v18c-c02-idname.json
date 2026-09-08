@@ -1,0 +1,115 @@
+{
+  "type": "page",
+  "title": "V-18 batch C: C-02 id/name reload matrix",
+  "body": [
+    {
+      "type": "panel",
+      "title": "BUTTONS",
+      "body": [
+        {
+          "type": "button",
+          "label": "EVT-c02id",
+          "onEvent": {
+            "click": { "actions": [{ "actionType": "reload", "componentId": "c02id" }] }
+          }
+        },
+        {
+          "type": "button",
+          "label": "EVT-c02name",
+          "onEvent": {
+            "click": { "actions": [{ "actionType": "reload", "componentId": "c02name" }] }
+          }
+        },
+        {
+          "type": "button",
+          "label": "EVT-zid",
+          "onEvent": {
+            "click": { "actions": [{ "actionType": "reload", "componentId": "zid" }] }
+          }
+        },
+        {
+          "type": "button",
+          "label": "EVT-zname",
+          "onEvent": {
+            "click": { "actions": [{ "actionType": "reload", "componentId": "zname" }] }
+          }
+        },
+        { "type": "button", "label": "TGT-c02id", "actionType": "reload", "target": "c02id" },
+        { "type": "button", "label": "TGT-c02name", "actionType": "reload", "target": "c02name" },
+        { "type": "button", "label": "TGT-zid", "actionType": "reload", "target": "zid" },
+        { "type": "button", "label": "TGT-zname", "actionType": "reload", "target": "zname" },
+        {
+          "type": "button",
+          "label": "AJX-c02id",
+          "actionType": "ajax",
+          "api": "/api/lab/c02noop",
+          "reload": "c02id"
+        },
+        {
+          "type": "button",
+          "label": "AJX-c02name",
+          "actionType": "ajax",
+          "api": "/api/lab/c02noop",
+          "reload": "c02name"
+        },
+        {
+          "type": "button",
+          "label": "AJX-zid",
+          "actionType": "ajax",
+          "api": "/api/lab/c02noop",
+          "reload": "zid"
+        },
+        {
+          "type": "button",
+          "label": "AJX-zname",
+          "actionType": "ajax",
+          "api": "/api/lab/c02noop",
+          "reload": "zname"
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "X: only id=c02id  -> /api/lab/c02x",
+      "body": {
+        "type": "crud",
+        "id": "c02id",
+        "syncLocation": false,
+        "api": "/api/lab/c02x",
+        "columns": [
+          { "name": "id", "label": "x-id" },
+          { "name": "engine", "label": "x-engine" }
+        ]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "Y: only name=c02name  -> /api/lab/c02y",
+      "body": {
+        "type": "crud",
+        "name": "c02name",
+        "syncLocation": false,
+        "api": "/api/lab/c02y",
+        "columns": [
+          { "name": "id", "label": "y-id" },
+          { "name": "engine", "label": "y-engine" }
+        ]
+      }
+    },
+    {
+      "type": "panel",
+      "title": "Z: id=zid + name=zname  -> /api/lab/c02z",
+      "body": {
+        "type": "crud",
+        "id": "zid",
+        "name": "zname",
+        "syncLocation": false,
+        "api": "/api/lab/c02z",
+        "columns": [
+          { "name": "id", "label": "z-id" },
+          { "name": "engine", "label": "z-engine" }
+        ]
+      }
+    }
+  ]
+}

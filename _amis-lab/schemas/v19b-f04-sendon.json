@@ -1,0 +1,48 @@
+{
+  "type": "page",
+  "title": "V-19 F-04 sendOn",
+  "body": [
+    {
+      "type": "form",
+      "title": "F-04: A=sendOn在autoComplete内  B=sendOn在source内  C=无sendOn(基线)",
+      "body": [
+        {
+          "type": "select",
+          "name": "selA",
+          "label": "A-sendOn-in-autoComplete",
+          "placeholder": "A",
+          "autoComplete": {
+            "method": "get",
+            "url": "/api/lab/f04a?term=${term}&wrap=array",
+            "sendOn": "${term.length >= 3}"
+          }
+        },
+        {
+          "type": "select",
+          "name": "selB",
+          "label": "B-sendOn-in-source",
+          "placeholder": "B",
+          "autoComplete": {
+            "method": "get",
+            "url": "/api/lab/f04bauto?term=${term}&wrap=array"
+          },
+          "source": {
+            "method": "get",
+            "url": "/api/lab/f04bsrc?term=${term}&wrap=array",
+            "sendOn": "${term.length >= 3}"
+          }
+        },
+        {
+          "type": "select",
+          "name": "selC",
+          "label": "C-no-sendOn",
+          "placeholder": "C",
+          "autoComplete": {
+            "method": "get",
+            "url": "/api/lab/f04c?term=${term}&wrap=array"
+          }
+        }
+      ]
+    }
+  ]
+}

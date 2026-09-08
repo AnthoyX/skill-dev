@@ -1,0 +1,25 @@
+{
+  "type": "page",
+  "title": "V-19 F-06 width-2",
+  "body": [
+    {
+      "type": "form",
+      "title": "F-06 第二轮: group内columnRatio + input-text 内部 input 宽度",
+      "body": [
+        {
+          "type": "group",
+          "body": [
+            { "type": "select", "name": "g1", "label": "g1-r1", "columnRatio": 1 },
+            { "type": "select", "name": "g2", "label": "g2-r2", "columnRatio": 2 },
+            { "type": "select", "name": "g3", "label": "g3-r6", "columnRatio": 6 }
+          ]
+        },
+        { "type": "input-text", "name": "tE", "label": "tE-base" },
+        { "type": "input-text", "name": "tA", "label": "tA-ratio", "columnRatio": 2 },
+        { "type": "input-text", "name": "tB", "label": "tB-size", "size": "xl" },
+        { "type": "input-text", "name": "tC", "label": "tC-cls", "inputClassName": "w-xl" },
+        { "type": "input-text", "name": "tD", "label": "tD-style", "style": { "width": "350px" } }
+      ]
+    }
+  ]
+}

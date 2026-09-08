@@ -1,0 +1,54 @@
+{
+  "type": "page",
+  "title": "V-20 A-02 adaptor-3",
+  "body": [
+    {
+      "type": "crud",
+      "id": "crudE",
+      "title": "E-records不写adaptor(对照)",
+      "api": { "method": "get", "url": "/api/lab/f20nested?nested=1" },
+      "columns": [
+        { "name": "id", "label": "ID" },
+        { "name": "engine", "label": "Engine" }
+      ]
+    },
+    {
+      "type": "crud",
+      "id": "crudF",
+      "title": "F-records+adaptor",
+      "api": {
+        "method": "get",
+        "url": "/api/lab/f20nested?nested=1",
+        "adaptor": "return { status: 0, data: { items: payload.data.records, total: payload.data.total } };"
+      },
+      "columns": [
+        { "name": "id", "label": "ID" },
+        { "name": "engine", "label": "Engine" }
+      ]
+    },
+    {
+      "type": "crud",
+      "id": "crudH",
+      "title": "H-业务失败无status(对照)",
+      "api": { "method": "get", "url": "/api/lab/f20err?errcode=1" },
+      "columns": [
+        { "name": "id", "label": "ID" },
+        { "name": "engine", "label": "Engine" }
+      ]
+    },
+    {
+      "type": "crud",
+      "id": "crudI",
+      "title": "I-业务失败+adaptor转status",
+      "api": {
+        "method": "get",
+        "url": "/api/lab/f20err?errcode=1",
+        "adaptor": "return { status: payload.code === 200 ? 0 : payload.code, msg: payload.msg, data: { items: [], total: 0 } };"
+      },
+      "columns": [
+        { "name": "id", "label": "ID" },
+        { "name": "engine", "label": "Engine" }
+      ]
+    }
+  ]
+}

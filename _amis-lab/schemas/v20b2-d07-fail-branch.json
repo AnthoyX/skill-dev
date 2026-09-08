@@ -1,0 +1,46 @@
+{
+  "type": "page",
+  "title": "V-20 D-07 fail branch",
+  "body": [
+    {
+      "type": "form",
+      "title": "D-07 失败分支: A2=confirmText B2=自定义dialog(close:false)",
+      "body": [
+        {
+          "type": "button",
+          "label": "DelA2",
+          "level": "danger",
+          "actionType": "ajax",
+          "confirmText": "Delete this record? (will fail)",
+          "api": { "method": "post", "url": "/api/lab/f20delA2?fail=1" }
+        },
+        {
+          "type": "button",
+          "label": "DelB2",
+          "level": "danger",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "B2: custom dialog (will fail)",
+            "actions": [
+              { "type": "button", "label": "Cancel", "actionType": "close" },
+              { "type": "button", "label": "Confirm", "level": "danger", "actionType": "submit", "close": false }
+            ],
+            "body": {
+              "type": "form",
+              "onEvent": {
+                "submitSucc": {
+                  "actions": [
+                    { "actionType": "custom", "script": "window.B2_SUCC = 'Y';" },
+                    { "actionType": "closeDialog" }
+                  ]
+                }
+              },
+              "api": { "method": "post", "url": "/api/lab/f20delB2?fail=1" },
+              "body": [{ "type": "alert", "body": "Delete this record? (will fail)", "level": "warning" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

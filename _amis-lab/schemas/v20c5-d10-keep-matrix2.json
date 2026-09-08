@@ -1,0 +1,38 @@
+{
+  "type": "page",
+  "title": "V-20 D-10 keep selection 3",
+  "body": [
+    {
+      "type": "crud",
+      "id": "crudH",
+      "name": "crudH",
+      "title": "H: keep=true + syncLocation默认(无loadDataOnce)",
+      "selectable": true,
+      "keepItemSelectionOnPageChange": true,
+      "perPage": 5,
+      "api": "/api/lab/f20pickH",
+      "headerToolbar": [{ "type": "tpl", "tpl": "H-HEADER: len=${selectedItems.length}" }],
+      "columns": [
+        { "name": "id", "label": "ID" },
+        { "name": "engine", "label": "Engine" }
+      ],
+      "bulkActions": [{ "type": "button", "label": "Batch Delete", "level": "danger" }]
+    },
+    {
+      "type": "crud",
+      "id": "crudI",
+      "name": "crudI",
+      "title": "I: keep不写 + syncLocation false",
+      "selectable": true,
+      "syncLocation": false,
+      "perPage": 5,
+      "api": "/api/lab/f20pickI",
+      "headerToolbar": [{ "type": "tpl", "tpl": "I-HEADER: len=${selectedItems.length}" }],
+      "columns": [
+        { "name": "id", "label": "ID" },
+        { "name": "engine", "label": "Engine" }
+      ],
+      "bulkActions": [{ "type": "button", "label": "Batch Delete", "level": "danger" }]
+    }
+  ]
+}

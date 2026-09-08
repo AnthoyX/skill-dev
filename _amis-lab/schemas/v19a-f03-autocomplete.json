@@ -1,0 +1,51 @@
+{
+  "type": "page",
+  "title": "V-19 F-03 autoComplete",
+  "body": [
+    {
+      "type": "form",
+      "title": "F-03: A=对象 B=true+source C=source+searchable D=字符串URL",
+      "body": [
+        {
+          "type": "select",
+          "name": "selA",
+          "label": "A-obj",
+          "placeholder": "A",
+          "autoComplete": {
+            "method": "get",
+            "url": "/api/lab/f03a?term=${term}&wrap=array"
+          }
+        },
+        {
+          "type": "select",
+          "name": "selB",
+          "label": "B-true",
+          "placeholder": "B",
+          "autoComplete": true,
+          "source": {
+            "method": "get",
+            "url": "/api/lab/f03b?term=${term}&wrap=array"
+          }
+        },
+        {
+          "type": "select",
+          "name": "selC",
+          "label": "C-src",
+          "placeholder": "C",
+          "searchable": true,
+          "source": {
+            "method": "get",
+            "url": "/api/lab/f03c?term=${term}&wrap=array"
+          }
+        },
+        {
+          "type": "select",
+          "name": "selD",
+          "label": "D-str",
+          "placeholder": "D",
+          "autoComplete": "/api/lab/f03d?term=${term}&wrap=array"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "type": "page",
+  "title": "V-20 A-02 adaptor-4",
+  "body": [
+    {
+      "type": "form",
+      "title": "J-提交后端失败(code=500)但不写adaptor",
+      "api": { "method": "post", "url": "/api/lab/f20submitJ?errcode=1" },
+      "onEvent": {
+        "submitSucc": {
+          "actions": [{ "actionType": "custom", "script": "window.J_SUCC = 'Y';" }]
+        }
+      },
+      "body": [{ "type": "input-text", "name": "foo", "label": "Foo", "value": "j" }]
+    },
+    {
+      "type": "form",
+      "title": "K-提交后端失败(code=500)+adaptor转status",
+      "api": {
+        "method": "post",
+        "url": "/api/lab/f20submitK?errcode=1",
+        "adaptor": "return { status: payload.code === 200 ? 0 : payload.code, msg: payload.msg };"
+      },
+      "onEvent": {
+        "submitSucc": {
+          "actions": [{ "actionType": "custom", "script": "window.K_SUCC = 'Y';" }]
+        }
+      },
+      "body": [{ "type": "input-text", "name": "bar", "label": "Bar", "value": "k" }]
+    }
+  ]
+}

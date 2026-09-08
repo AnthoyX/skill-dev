@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## 1.2.10（2026-09-08）
+
+V-20 实测收尾 3 条（详见 `docs/verify-lab-260908.yaml` §v20），`A-02/D-07/D-10` 全部由「据源码 / 实战观察」升「已实测」（27→30 条），**三条全部修正机制或理由**：
+
+- **`A-02` 机制修正**：原「非标准响应不转换就渲染不出」**不成立（过严）**——实测无 `status` 字段时 amis 视为成功并渲染：select `{code:200,data:[...]}` 不写 adaptor 照样 3 项；crud `data.records`（字段名完全不被识别）照样渲染 10 行（amis 会遍历 `data` 的值找数组）。**真正的必要性在「失败判定」**：提交返 `{code:500,msg}` 不转换时 **`submitSucc` 照触发**（J 组 `J_SUCC=Y`，后端失败被当成功 → 弹层照关、后续动作照执行）；转换后正确走失败分支（K 组 `K_SUCC=UNSET`）
+- **`D-07` 理由修正**：`confirmText` **不是浏览器原生 `confirm`**（覆盖 `window.confirm` 后未被调用），弹的是 amis 自有确认框（标题「系统消息」+ 文本 + 取消/确认），基础功能可用。不用的真因是**失败分支不可控**：接口 `status=1` 时 confirmText 弹层**照样关闭**（A2），而自定义 dialog（`close:false` + `submitSucc` closeDialog）失败时保持打开可重试（B2）；附带实证漏写 `closeDialog` 会导致提交成功后**弹层残留**（C 组）
+- **`D-10` 机制修正**：① **`selectedItems` 只在 crud 数据域内可见**（与 `A-01` 同构）——弹层底部按钮的 `disabledOn` 空选时**不禁用**、外层 form api 的 `${selectedItems|pick:id}` 提交体为 `{"ids":""}`；把提交按钮放进 crud headerToolbar 后 body 正常为 `{"ids":[1,2]}`。② **跨页保留选中 = `keepItemSelectionOnPageChange: true` 且 `syncLocation: false`**（2×2 矩阵：keep+sync默认→丢；keep+sync:false→保留；不写 keep→丢）。③ **`loadDataOnce` 与选中保留无关**（F vs G、D vs H 双对照），原归因不准确
+- 新增排障 `P-28`（后端业务失败被当成功）、`P-29`（弹层内选择器提交体为空 / 空选可提交）；`self-check.md` §1/§3 三条措辞同步；`META.md` 已实测 27→30，「据源码」级别清空
+- 排障 27→29；归档 `_amis-lab/schemas/v20a1~v20c5`（10 个）+ README 归档表；lab mock 新增 `?nested=1`（data.records）与 `?errcode=1`（业务失败无 status）
+- 剩余未实测 3 条：`F-09`（后端协作约束，建议降级为约定类规则）/ `C-08` / `R-01`（规范建议，不排实测）
+
+## 1.2.9（2026-09-08）
+
+V-19 实测表单域 4 条（详见 `docs/verify-lab-260908.yaml`），`F-03/F-04/F-06/F-08` 全部升「已实测」（23→27 条），其中 **2 条推翻原断言、1 条大幅修正**：
+
+- **`F-03` 部分推翻**：`autoComplete` **字符串 URL 与对象等效**（D 组实证 `term=abc` 正常请求并渲染 3 项），原「必须是对象」过严。不触发联想的是：① `autoComplete: true` + 外部 `source`（实测只等价于「可搜索」，有搜索框但零请求、纯本地过滤）；② 只写 `source`（即便补 `searchable`，也只在加载时请求一次）。附带观察：无 `sendOn` 时**加载即发一次 `term=` 空请求**
+- **`F-04` 成立 + 两个新发现**：sendOn 在 autoComplete 内 → 1 字符不发、3 字符发，且**连初始加载请求一起拦掉**；写在 source 内 → 完全失效（1 字符即发，与不写 sendOn 同构）。**新发现：autoComplete 与 source 并存时 source 的 url 零请求**（autoComplete 完全接管数据源，别再写 source 兜底）
+- **`F-06` 大幅修正**（三轮对照，判据 `getBoundingClientRect().width`，基线 1230px）：
+  - `columnRatio` **只在 `group` 内生效**（1/2/6 → 88/192/607）；form 直接子项下**无效**（仍撑满 1230）→ 原「宽度只认 columnRatio」仅对 group 场景成立
+  - `size: "xl"` 无效（原断言成立）
+  - **推翻「`inputClassName` 无此内置 CSS 类」**：内置 `w-sm`/`w-lg`/`w-xl` = 150/280/320px，假类名对照组回到 1230 证明非巧合；类落在 `.cxd-Form-control`，内部 input 随之变窄
+  - **推翻「`style.width` 不传到内部 input」**：style 作用外层容器（350px），内部 input 实测收缩为 328px，控件整体变窄 → 写法有效
+- **`F-08` 升实测 + 修正**：`value: "${code}"` **非必需**（name 与行字段同名即自动取值）；`hidden` 必需（不写则提交体无 id——弹层 form 只提交 form 内声明的字段，不会自动带行数据）；**新发现：static 的值会随表单提交**，后端 DTO 需能接收或忽略
+- 同步修正：`P-09/P-12/P-15/P-24`（P-15 原措辞与实测相反，已重写）；`self-check.md` §5 四条措辞同步；`META.md` 已实测 23→27 条；`SKILL.md` F-03/F-06 索引行同步
+- 排障条目维持 27 条；归档 `_amis-lab/schemas/v19a-f03-autocomplete.json`、`v19b-f04-sendon.json`、`v19c1/c2/c3-f06-*.json`、`v19d-f08-static-hidden.json`
+- 剩余未实测 6 条：`F-09`（最后做，后端协作）/ `A-02` / `D-07` / `D-10` / `C-08` / `R-01`（后两条为规范建议，不排实测）
+
+## 1.2.8（2026-09-07）
+
+V-18 实测 CRUD 高频 6 条（详见 `docs/verify-lab-260907.yaml` §V-18），`C-01/C-02/C-03/C-05/C-06/C-07` 全部由「实战观察/据文档/据源码」升「已实测」（17→23 条），其中 **2 条修正原断言**、1 条强化：
+
+- **`C-01` 修正后果**：`perPageAvailable` 写错位置（footerToolbar 组件内）时**切换器照常出现**（原「切换器不出现」不成立），只是自定义项被忽略、回退默认 `[5,10,20,50,100]`；另实测列表不含当前 perPage 时切换器显示「请选择」空值 → `perPageAvailable` 须包含 `defaultParams.perPage`
+- **`C-02` 修正机制**（3 crud × 3 载体定位矩阵，判据=新增请求数）：`componentId` **只认 id**（填 name 恒失效，即使 crud 已同时设 id）；`target` 与按钮顶层 `reload` **认 id 也认 name**（仅设 id 的 crud 用 id 定位同样生效）——原「id 供 componentId、name 供 target/reload」分工不准确，`name` 非 target/reload 的必要条件；「同时设 id+name」仍为稳妥写法（覆盖全部定位方式）
+- **`C-05` 强化（新发现）**：原断言成立且更严重——**一旦 `api.data` 非空，amis 不再自动附加 `page`/`perPage`**（GET/POST 同构，原生 fetcher 与 lab fetcher 双验证）：只映射 `current` 则 `perPage` 丢；`api.data` 只写无关字段 `foo=bar` 时分页参数**全部丢失**（翻页仍只发 `foo=bar`）→ **page 与 perPage 必须都映射**；等价替代：crud 的 `pageField`/`perPageField`（实测生效）
+- **`C-03` 升实测**：加载即写 `?page=1`、翻页写 `?page=N&perPage=M`；带参 URL 打开会按 URL 参数请求（实测 `?page=3` → 请求 `page=3`）
+- **`C-06` 升实测**：未设 `filterTogglable` 时开关按钮 DOM 不存在；已设时可双向开合、筛选栏默认展开
+- **`C-07` 升实测并修正后果**：缺 `*` 时未命中值显示表格空值占位「-」（原「显示空白」）；数字值可匹配字符串 key（id=1 命中 `"1"`）
+- 同步修正：`P-13`（症状改为「选项不对/空值」）、`P-19/P-20/P-21` 补实测、`P-03` 补 C-02 引用；`self-check.md` C-01/C-05 自检项强化；`SKILL.md` F-05 索引行同步 V-17 修正（「成对」→「必设 asBlob」，上轮遗留）
+- 排障条目维持 27 条（新发现并入 P-13/P-20，未新增）；lab 新增 `index-raw.html`（原生 fetcher 对照壳）
+
 ## 1.2.7（2026-09-07）
 
 V-17 实测（详见 `docs/verify-lab-260907.yaml` §V-17），`F-05` 由「实战观察」升「已实测」，并**修正断言**（原「必须成对」不准确）：

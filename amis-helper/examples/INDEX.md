@@ -11,7 +11,7 @@
 | dialog-form-add.json | 新增弹层 | mainCrud.id | D-01, D-04, D-05, F-02, F-03, F-04 | 56 |
 | dialog-form-edit.json | 编辑弹层（static + hidden） | mainCrud.id + 行上下文 ${code}/${name}/${id} | D-01, D-04, D-05, F-08 | 41 |
 | dialog-confirm.json | 危险操作确认弹层 | mainCrud.id + 行上下文 ${code}/${id} | D-01, D-04, D-05, D-07 | 41 |
-| bulk-actions-picker.json | 弹层内数据选择器（loadDataOnce + bulkActions） | mainCrud.name + 行上下文 ${groupCode}/${groupId} | D-10, D-12, A-02 | 59 |
+| bulk-actions-picker.json | 弹层内数据选择器（loadDataOnce + bulkActions + 跨页保留选中） | mainCrud.name + 行上下文 ${groupCode}/${groupId} | D-10, D-12, A-02 | 61 |
 
 注：
 - bulk-actions-picker 的 `"reload": "mainCrud"` 是 ajax 按钮的顶层 reload 属性（指向 name），

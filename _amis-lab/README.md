@@ -25,6 +25,8 @@ python server.py 9000
 ```
 _amis-lab/
 ├── index.html      # 渲染壳：加载本地 SDK，读取 schema.json 渲染。一般不用改
+├── index-raw.html  # 同上，但**不注入自定义 fetcher**（用 amis 原生 fetcher）。
+│                   # 出现可疑结果时用它做对照，排除「lab 自定义 fetcher 篡改了行为」
 ├── schema.json     # ★ 验证配置，改这里，刷新浏览器即可
 ├── server.py       # 静态服务 + mock API（带毫秒级时间戳日志）
 ├── schemas/        # 归档的验证配置，需要时复制回 schema.json
@@ -68,6 +70,25 @@ copy schemas\v3-download-timing.json schema.json
 | `v15a-f07-autocomplete.json` | V-15：autoComplete 数据源形态——`data` 直接数组与 `{options}` 均渲染（推翻原 F-07 断言），CRUD 式对象当 data 才显示 invalid label |
 | `v16a-d02-download.json` | V-16：D-02 三问——A download 是否带 Authorization / B ajax+blob 的 `then` 是否触发（含非 blob 对照组 D）/ C 裸 `fetch()` 是否 401 |
 | `v17a-f05-upload.json` | V-17：F-05 上传 2×2 对照——`asBlob` / `dataType:"form-data"` 四种组合，判据为请求是否 multipart 且含 `filename=` |
+| `v18a-crud-c01-c05-c06-c07.json` | V-18-A/C/D：C-01 每页切换器 `perPageAvailable` 位置三对照；C-05 分页参数映射六组（含 `pageField` 替代方案、POST 对照、`foo=bar` 空映射对照）；C-06 `filterTogglable` 三对照；C-07 mapping `*` 兜底三对照 |
+| `v18b-c03-synclocation.json` | V-18-B：C-03 `syncLocation` 默认 vs 显式 `false`——翻页与带参 URL 打开时地址栏是否被污染 |
+| `v19a-f03-autocomplete.json` | V-19-A：F-03 autoComplete 四组——对象 / `true`+source / 仅 source(+searchable) / 字符串 URL，判据为输入后是否发 `term=abc` |
+| `v19b-f04-sendon.json` | V-19-B：F-04 sendOn 位置三组（autoComplete 内 / source 内 / 不写），判据为输入 1 字符与 3 字符时的请求 |
+| `v19c1-f06-select-width.json` | V-19-C 第 1 轮：F-06 select 五种宽度写法的实测宽度（基线 1230px） |
+| `v19c2-f06-group-inputtext.json` | V-19-C 第 2 轮：group 内 columnRatio 1/2/6 是否生效 + input-text 同五种写法 |
+| `v19c3-f06-cls-control.json` | V-19-C 第 3 轮：`inputClassName` 内置宽度类对照（w-xl / 假类名 / w-sm / w-lg） |
+| `v19d-f08-static-hidden.json` | V-19-D：F-08 编辑弹层三组（static 带 value / static 不带 value / 无 hidden 对照），判据为 POST 提交体字段 |
+| `v20a1-a02-adaptor-basic.json` | V-20-A 第 1 轮：A-02 select/crud 带 adaptor vs 不写（nonstd 响应），判据为渲染项数 |
+| `v20a2-a02-nested-failcode.json` | V-20-A 第 2 轮：A-02 `data.records` 字段名不识别 + crud 业务失败（code=500）对照 |
+| `v20a3-a02-submit-failcode.json` | V-20-A 第 3 轮：A-02 form 提交 `{code:500}` 不写 adaptor（submitSucc 误触发）vs 写 adaptor（走失败分支） |
+| `v20b1-d07-confirmtext.json` | V-20-B：D-07 confirmText（覆盖 window.confirm 证非原生框）vs 自定义 dialog vs 漏 closeDialog 对照 |
+| `v20b2-d07-fail-branch.json` | V-20-B：D-07 失败分支——confirmText 接口失败弹层照关 vs 自定义 dialog 保持打开 |
+| `v20c1-d10-picker.json` | V-20-C 第 1 轮：D-10 弹层选择器 loadDataOnce 对照——外层 form 提交体 `{"ids":""}` |
+| `v20c2-d10-scope.json` | V-20-C 作用域探针：同一弹层 FORM 层 tpl（len 空）vs crud headerToolbar（len=2） |
+| `v20c3-d10-keep-selection.json` | V-20-C 跨页保留首轮：crud 内提交按钮 body `{"ids":[1,2]}` + keep+sync默认（丢） |
+| `v20c4-d10-keep-matrix.json` | V-20-C 跨页矩阵 F/G：syncLocation:false + keep=true → **保留**（loadDataOnce 无关） |
+| `v20c5-d10-keep-matrix2.json` | V-20-C 跨页矩阵 H/I：syncLocation 默认（丢）/ 不写 keep（丢） |
+| `v18c-c02-idname.json` | V-18-C：C-02 定位矩阵——3 个 crud（仅 id / 仅 name / id+name）× 4 种定位值 × 3 种载体（`componentId` / `target` / 顶层 `reload`），判据为各 crud 新增请求数 |
 
 > `schema.json` 里接口地址写相对路径 `/api/mock2/sample`，和 amis 文档站的写法一致，
 > 验证通过后可直接搬到真实项目，不用改。

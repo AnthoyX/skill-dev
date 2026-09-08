@@ -1,0 +1,17 @@
+{
+  "type": "page",
+  "title": "V-19 F-06 width-3",
+  "body": [
+    {
+      "type": "form",
+      "title": "F-06 第三轮: inputClassName 是否为内置宽度类（假类名对照组）",
+      "body": [
+        { "type": "input-text", "name": "tE", "label": "tE-base" },
+        { "type": "input-text", "name": "tC", "label": "tC-w-xl", "inputClassName": "w-xl" },
+        { "type": "input-text", "name": "tF", "label": "tF-fake-cls", "inputClassName": "w-nonexistent-xyz" },
+        { "type": "input-text", "name": "tG", "label": "tG-w-sm", "inputClassName": "w-sm" },
+        { "type": "input-text", "name": "tH", "label": "tH-w-lg", "inputClassName": "w-lg" }
+      ]
+    }
+  ]
+}

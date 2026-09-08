@@ -1,0 +1,68 @@
+{
+  "type": "page",
+  "title": "V-20 D-10 scope",
+  "body": {
+    "type": "form",
+    "body": [
+      {
+        "type": "button",
+        "label": "PickC",
+        "actionType": "dialog",
+        "dialog": {
+          "title": "C: scope probe",
+          "size": "lg",
+          "actions": [
+            { "type": "button", "label": "Cancel", "actionType": "close" },
+            {
+              "type": "button",
+              "label": "Submit",
+              "level": "primary",
+              "actionType": "submit",
+              "close": false,
+              "disabledOn": "!${selectedItems.length}"
+            }
+          ],
+          "body": {
+            "type": "form",
+            "api": {
+              "method": "post",
+              "url": "/api/lab/f20pickSaveC",
+              "data": { "ids": "${selectedItems|pick:id}" }
+            },
+            "onEvent": { "submitSucc": { "actions": [{ "actionType": "closeDialog" }] } },
+            "body": [
+              {
+                "type": "tpl",
+                "tpl": "FORM-LEVEL: len=${selectedItems.length} ids=${selectedItems|pick:id}"
+              },
+              {
+                "type": "crud",
+                "id": "pickCrudC",
+                "name": "pickCrudC",
+                "selectable": true,
+                "loadDataOnce": true,
+                "perPage": 5,
+                "api": "/api/lab/f20pickC",
+                "headerToolbar": [
+                  { "type": "tpl", "tpl": "HEADER-LEVEL: len=${selectedItems.length}" },
+                  {
+                    "type": "button",
+                    "label": "BulkPick",
+                    "level": "danger",
+                    "actionType": "custom",
+                    "script": "window.BULK_LEN = (event.data.selectedItems || []).length;"
+                  }
+                ],
+                "columns": [
+                  { "name": "id", "label": "ID" },
+                  { "name": "engine", "label": "Engine" }
+                ],
+                "bulkActions": [{ "type": "button", "label": "Batch Delete", "level": "danger" }]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
