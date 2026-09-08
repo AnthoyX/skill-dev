@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## 1.2.9（2026-09-08）
+
+V-19 实测表单域 4 条（详见 `docs/verify-lab-260908.yaml`），`F-03/F-04/F-06/F-08` 全部升「已实测」（23→27 条），其中 **2 条推翻原断言、1 条大幅修正**：
+
+- **`F-03` 部分推翻**：`autoComplete` **字符串 URL 与对象等效**（D 组实证 `term=abc` 正常请求并渲染 3 项），原「必须是对象」过严。不触发联想的是：① `autoComplete: true` + 外部 `source`（实测只等价于「可搜索」，有搜索框但零请求、纯本地过滤）；② 只写 `source`（即便补 `searchable`，也只在加载时请求一次）。附带观察：无 `sendOn` 时**加载即发一次 `term=` 空请求**
+- **`F-04` 成立 + 两个新发现**：sendOn 在 autoComplete 内 → 1 字符不发、3 字符发，且**连初始加载请求一起拦掉**；写在 source 内 → 完全失效（1 字符即发，与不写 sendOn 同构）。**新发现：autoComplete 与 source 并存时 source 的 url 零请求**（autoComplete 完全接管数据源，别再写 source 兜底）
+- **`F-06` 大幅修正**（三轮对照，判据 `getBoundingClientRect().width`，基线 1230px）：
+  - `columnRatio` **只在 `group` 内生效**（1/2/6 → 88/192/607）；form 直接子项下**无效**（仍撑满 1230）→ 原「宽度只认 columnRatio」仅对 group 场景成立
+  - `size: "xl"` 无效（原断言成立）
+  - **推翻「`inputClassName` 无此内置 CSS 类」**：内置 `w-sm`/`w-lg`/`w-xl` = 150/280/320px，假类名对照组回到 1230 证明非巧合；类落在 `.cxd-Form-control`，内部 input 随之变窄
+  - **推翻「`style.width` 不传到内部 input」**：style 作用外层容器（350px），内部 input 实测收缩为 328px，控件整体变窄 → 写法有效
+- **`F-08` 升实测 + 修正**：`value: "${code}"` **非必需**（name 与行字段同名即自动取值）；`hidden` 必需（不写则提交体无 id——弹层 form 只提交 form 内声明的字段，不会自动带行数据）；**新发现：static 的值会随表单提交**，后端 DTO 需能接收或忽略
+- 同步修正：`P-09/P-12/P-15/P-24`（P-15 原措辞与实测相反，已重写）；`self-check.md` §5 四条措辞同步；`META.md` 已实测 23→27 条；`SKILL.md` F-03/F-06 索引行同步
+- 排障条目维持 27 条；归档 `_amis-lab/schemas/v19a-f03-autocomplete.json`、`v19b-f04-sendon.json`、`v19c1/c2/c3-f06-*.json`、`v19d-f08-static-hidden.json`
+- 剩余未实测 6 条：`F-09`（最后做，后端协作）/ `A-02` / `D-07` / `D-10` / `C-08` / `R-01`（后两条为规范建议，不排实测）
+
 ## 1.2.8（2026-09-07）
 
 V-18 实测 CRUD 高频 6 条（详见 `docs/verify-lab-260907.yaml` §V-18），`C-01/C-02/C-03/C-05/C-06/C-07` 全部由「实战观察/据文档/据源码」升「已实测」（17→23 条），其中 **2 条修正原断言**、1 条强化：

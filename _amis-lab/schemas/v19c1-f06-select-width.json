@@ -1,0 +1,17 @@
+{
+  "type": "page",
+  "title": "V-19 F-06 width-1",
+  "body": [
+    {
+      "type": "form",
+      "title": "F-06: E=基线 A=columnRatio:2 B=size:xl C=inputClassName:w-xl D=style.width",
+      "body": [
+        { "type": "select", "name": "wE", "label": "E-base", "placeholder": "E" },
+        { "type": "select", "name": "wA", "label": "A-ratio", "placeholder": "A", "columnRatio": 2 },
+        { "type": "select", "name": "wB", "label": "B-size", "placeholder": "B", "size": "xl" },
+        { "type": "select", "name": "wC", "label": "C-cls", "placeholder": "C", "inputClassName": "w-xl" },
+        { "type": "select", "name": "wD", "label": "D-style", "placeholder": "D", "style": { "width": "350px" } }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "type": "page",
+  "title": "V-19 F-08 static/hidden",
+  "body": {
+    "type": "crud",
+    "api": "/api/lab/f08list",
+    "columns": [
+      { "name": "id", "label": "ID" },
+      { "name": "engine", "label": "Engine" },
+      {
+        "type": "operation",
+        "label": "OPS",
+        "buttons": [
+          {
+            "type": "button",
+            "label": "EditA",
+            "actionType": "dialog",
+            "dialog": {
+              "title": "A: static with value + hidden id",
+              "body": {
+                "type": "form",
+                "api": { "method": "post", "url": "/api/lab/f08saveA" },
+                "body": [
+                  { "type": "static", "name": "engineStatic", "label": "S-with-value", "value": "${engine}" },
+                  { "type": "hidden", "name": "id" },
+                  { "type": "input-text", "name": "browser", "label": "Browser" }
+                ]
+              }
+            }
+          },
+          {
+            "type": "button",
+            "label": "EditB",
+            "actionType": "dialog",
+            "dialog": {
+              "title": "B: static no value + hidden id",
+              "body": {
+                "type": "form",
+                "api": { "method": "post", "url": "/api/lab/f08saveB" },
+                "body": [
+                  { "type": "static", "name": "engine", "label": "S-no-value" },
+                  { "type": "hidden", "name": "id" },
+                  { "type": "input-text", "name": "browser", "label": "Browser" }
+                ]
+              }
+            }
+          },
+          {
+            "type": "button",
+            "label": "EditC",
+            "actionType": "dialog",
+            "dialog": {
+              "title": "C: no hidden (control)",
+              "body": {
+                "type": "form",
+                "api": { "method": "post", "url": "/api/lab/f08saveC" },
+                "body": [{ "type": "input-text", "name": "browser", "label": "Browser" }]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

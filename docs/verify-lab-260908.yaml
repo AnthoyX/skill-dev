@@ -1,0 +1,100 @@
+# V-19 实测结论（amis 6.13.0 本地 lab，2026-09-08）
+
+meta:
+  date: 2026-09-08
+  env: _amis-lab（amis 6.13.0 SDK + 本地 mock；mock 用 ?wrap=array 返 data 直接数组，服务端日志打完整 query 与请求体）
+  method: |
+    改 schema.json → playwright 真实点击（click/type）展开联想框或弹层 → eval 量 DOM →
+    服务端日志看请求 query 与提交 body。
+    联想场景判据：输入 abc 后服务端是否出现 term=abc 请求 + 下拉 [role=option] 数量；
+    宽度场景判据：getBoundingClientRect().width；弹层场景判据：POST 提交 body 字段。
+  schemas:
+    V-19-A: _amis-lab/schemas/v19a-f03-autocomplete.json
+    V-19-B: _amis-lab/schemas/v19b-f04-sendon.json
+    V-19-C: _amis-lab/schemas/v19c1-f06-select-width.json + v19c2-f06-group-inputtext.json + v19c3-f06-cls-control.json
+    V-19-D: _amis-lab/schemas/v19d-f08-static-hidden.json
+
+results:
+  - id: V-19-A
+    rule: F-03（autoComplete 是否必须是对象）
+    verdict: '部分推翻：字符串 URL 同样生效；仅 true / 只写 source 不触发远程联想'
+    design: |
+      同一 form 四个 select，各指向不同 mock 路径，输入 abc 后看日志：
+        A  autoComplete 对象 {method,url}
+        B  autoComplete: true + 外部 source 对象
+        C  只写 source 对象 + searchable: true（补 searchable 才有搜索框，否则无可输入框）
+        D  autoComplete 字符串 URL（新增组，验证「必须对象」是否过严）
+      harness 自证：B/C/D 组均确认搜索框 value 已收到 abc（val=abc），排除「输入没被认到」的误判。
+    observed:
+      A: 'GET /api/lab/f03a?term=abc → 有请求，下拉 3 项'
+      B: '搜索框 value=abc，但无任何 term=abc 请求，下拉 0 项（仅本地过滤初始 3 项）'
+      C: '搜索框 value=abc，无 term=abc 请求，下拉 0 项'
+      D: 'GET /api/lab/f03d?term=abc → 有请求，下拉 3 项 Alpha/Beta/Gamma'
+    conclusion:
+      - '**字符串 URL 形态可用**（D 组实证）：`autoComplete: "/api/xxx?keyword=${term}"` 与对象形态等效，原「必须是对象」过严'
+      - '`autoComplete: true` 只等价于「可搜索」（B 组有搜索框但不请求），+ 外部 source 不触发远程联想 → 原断言后半句成立'
+      - '只写 source（即使加 searchable）也只在初始加载时请求一次，输入只做本地过滤 → 不产生联想'
+      - '附带观察：无 sendOn 的 autoComplete 在**页面加载时即发一次 term= 空请求**'
+
+  - id: V-19-B
+    rule: F-04（sendOn 是否必须写在 autoComplete 内）
+    verdict: '成立；并新增两个发现'
+    design: |
+      三组，sendOn 条件统一为 ${term.length >= 3}，先输入 1 字符 a，再补到 3 字符 abc：
+        A  sendOn 在 autoComplete 对象内
+        B  sendOn 写在 source 对象内，autoComplete 不带 sendOn（autoComplete 与 source 用不同 url 区分）
+        C  完全不写 sendOn（基线）
+    observed:
+      A: '只有 f04a?term=abc；term=a 无请求；**初始加载的 term= 空请求也没有**'
+      B: 'f04bauto?term=a 发出（1 字符即发）、term=abc 发出；f04bsrc **零请求**'
+      C: 'f04c?term=（初始）、term=a、term=abc 全部发出'
+    conclusion:
+      - '**F-04 成立**：sendOn 写进 source 内完全失效（B 组 1 字符即发，与基线 C 同构）'
+      - '新发现 1：**autoComplete 与 source 并存时 source 的 url 一次都不会被请求**（f04bsrc 零请求，含初始加载），autoComplete 完全接管数据源'
+      - '新发现 2：**sendOn 同时管控初始加载**（A 组连初始的 term= 空请求都被拦截）；不写 sendOn 则加载即请求一次'
+
+  - id: V-19-C
+    rule: F-06（表单项宽度怎么写才生效）
+    verdict: '大幅修正：columnRatio 只在 group 内生效；inputClassName 与 style.width 实际有效'
+    design: |
+      三轮，判据均为 getBoundingClientRect().width（控件容器 .cxd-Form-control 与内部 input）：
+        第 1 轮（form 直接子项，5 个 select）：基线 / columnRatio:2 / size:xl / inputClassName:w-xl / style.width:350px
+        第 2 轮（group 内 3 个 select，columnRatio 1/2/6）+ input-text 同 5 种写法
+        第 3 轮（对照）：w-xl / 假类名 w-nonexistent-xyz / w-sm / w-lg
+    observed:
+      第1轮_select: '基线 1230 / columnRatio:2 1230（无效）/ size:xl 1230（无效）/ w-xl 320（有效）/ style.width 350（有效）'
+      第2轮_group: 'columnRatio 1→88、2→192、6→607（生效，约 1:2:6）'
+      第2轮_input-text: '基线 1230 / columnRatio:2 1230（无效）/ size:xl 1230（无效）/ w-xl 320 / style.width 350'
+      第3轮_对照: '基线 1230 / w-xl 320 / 假类名 w-nonexistent-xyz 1230（无效果）/ w-sm 150 / w-lg 280'
+    conclusion:
+      - '**columnRatio 只在 group 内生效**（1:2:6 → 88/192/607）；form 直接子项（mode=normal）下**无效**，控件仍撑满整行 → 原断言「宽度只认 columnRatio」只对 group 场景成立'
+      - '**`size: "xl"` 确实无效**（select 与 input-text 均无变化）→ 原断言成立'
+      - '**推翻「inputClassName 无此内置 CSS 类」**：amis 6.13.0 内置 w-sm/w-lg/w-xl 等宽度类（150/280/320px），假类名对照组回到基线宽度，证明非巧合；类落在 `.cxd-Form-control` 上，内部 input 随之变窄'
+      - '**推翻「style.width 不传到内部 input」**：style 作用在外层容器（350px），内部 input 实测随之收缩为 328px，视觉上控件整体变窄 → 写法有效（只是实现位置在外层）'
+
+  - id: V-19-D
+    rule: F-08（编辑弹层 static / hidden）
+    verdict: '成立并修正：static 的 value 非必需；新增「static 值会随表单提交」'
+    design: |
+      crud 行内三个编辑按钮各开一个 dialog form，提交到不同 mock 路径看 body：
+        A  static（name=engineStatic + value:"${engine}"）+ hidden id + input-text browser
+        B  static 不写 value（name 与行字段同名 engine）+ hidden id + input-text browser
+        C  只有 input-text browser（无 hidden，对照）
+    observed:
+      A_展示: 'static 显示「Trident - 001」（行数据取到）'
+      A_提交: 'body={"engineStatic":"Trident - 001","id":1,"browser":"Internet Explorer"}'
+      B_展示: 'static 同样显示「Trident - 001」'
+      B_提交: 'body={"engine":"Trident - 001","id":1,"browser":"Internet Explorer"}'
+      C_提交: 'body={"browser":"Internet Explorer"}（无 id）'
+    conclusion:
+      - '**hidden 必需**：不写 hidden 时提交体只有 form 内声明的字段（C 组无 id）→ 原断言成立'
+      - '**static 的 `value:"${code}"` 非必需**：name 与行字段同名时自动从数据域取值（B 组实证）；value 只在「字段名与展示来源不同名」时才需要'
+      - '**新发现：static 字段的值会随表单提交**（A/B 组 body 均含该字段）→ 后端 DTO 需能接收，或确认可忽略'
+      - '弹层 form 只提交 form 内声明的字段，不会自动带上整行数据'
+
+回流:
+  - 'F-03 改为「对象或字符串 URL 二选一」，升已实测（V-19-A）'
+  - 'F-04 升已实测，补「source 内 sendOn 失效 + autoComplete 与 source 并存时 source 不发请求 + sendOn 管控初始加载」'
+  - 'F-06 重写：columnRatio 限 group 内；size 无效；inputClassName/style.width 有效（推翻原表格两行）'
+  - 'F-08 升已实测，补「value 非必需」与「static 值会提交」'
+  - 'self-check.md §5 同步 F-03/F-04/F-06/F-08 措辞；pitfalls P-09/P-12/P-15/P-24 措辞同步'

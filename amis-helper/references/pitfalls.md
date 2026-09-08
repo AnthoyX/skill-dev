@@ -31,7 +31,7 @@
 ## 表单控件
 
 ### P-09 autoComplete 不触发联想
-- 错误：`autoComplete: true` + 外部 `source` → 见 references/form-controls.md §3（`F-03`）
+- 实测（V-19，2026-09-08）：三种错法 ① `autoComplete: true` + 外部 `source`；② 只写 `source`（即便加 `searchable`，也只在加载时请求一次，之后纯本地过滤）；③ `autoComplete` 写成布尔以外要靠对象或字符串 URL → 见 references/form-controls.md §3（`F-03`）
 
 ### P-10 联想下拉显示 invalid label
 - 错误：① adapter 字符串转换（amis 6.13.0 不可用）② 返回字段与 labelField 不匹配 → 见 references/form-controls.md §8（`F-10`）、§7（`F-09`）
@@ -39,8 +39,8 @@
 ### P-11 联想下拉显示 invalid label / 选项错乱
 - 错误：autoComplete 的 source 响应 `data` 是 CRUD 式对象（如 `{rows,items}`、`{count,total}`）→ amis 把对象的**值**当选项遍历，显示 `invalid label` 或数字 → 见 references/form-controls.md §3（`F-07`）
 
-### P-12 sendOn 配了但联想请求不发出
-- 错误：`sendOn` 放在 source 对象内 → 见 references/form-controls.md §3（`F-04`）
+### P-12 sendOn 配了但联想请求不发出 / 每敲一个字符就发请求
+- 实测（V-19，2026-09-08）：`sendOn` 放在 source 对象内失效（1 字符即发，与不写 sendOn 同构）；另注：已配 autoComplete 时再写一份 source，source 的 url **零请求**；`sendOn` 也管控初始加载请求 → 见 references/form-controls.md §3（`F-04`）
 
 ## CRUD/列表
 
@@ -53,7 +53,7 @@
 ## 通用
 
 ### P-15 表单项宽度控制无效
-- 错误：`size: "xl"` / `inputClassName: "w-xl"` / `style.width` → 见 references/form-controls.md §6（`F-06`）
+- 实测（V-19，2026-09-08）：`size: "xl"` 确实无效；`columnRatio` 只在 `group` 内生效（form 直接子项下控件仍撑满整行）。有效写法是 `inputClassName`（内置 `w-sm`/`w-lg`/`w-xl` = 150/280/320px）或 `style.width`（内部 input 随之收缩） → 见 references/form-controls.md §6（`F-06`）
 
 ### P-16 amis Schema 校验报「JSON 中不允许有注释」
 - 错误：配置内含 `//` 或 `/* */` → 见 META.md（`R-01`）
@@ -82,7 +82,7 @@
 - 实测（V-17，2026-09-07）：真因是**缺 `asBlob: true`**——文件在选中瞬间就被上传到默认 receiver `/api/upload/file`，表单提交体里没有文件（只有上传响应对象）；`dataType: "form-data"` 在 `asBlob` 存在时**可省**（amis 自动转 multipart）→ 见 references/form-controls.md §5（`F-05`）
 
 ### P-24 编辑提交后端报缺主键 / 只读字段被误改
-- 错误：主键未用 `hidden` 承载、只读字段未用 `static` 展示 → 见 references/form-controls.md §4（`F-08`）
+- 实测（V-19，2026-09-08）：提交体只含 form 内声明的字段——主键未用 `hidden` 承载则 body 里没有 id（行数据不会自动带上）；只读字段未用 `static` 展示则变成可编辑输入框。另注：**static 的值会随表单提交**（后端需能接收或忽略），且 `static` 的 `value` 非必需（name 与行字段同名即自动取值）→ 见 references/form-controls.md §4（`F-08`）
 
 ### P-25 ajax 按钮提交时必填校验不拦截，空值照样发请求
 - 实测（V-11 轮次，2026-09-01）：ajax 按钮跳过提交前校验阻断；表单项的实时红字是 onChange 副作用，非提交阻断 → 见 references/form-controls.md §2（`F-02`）

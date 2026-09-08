@@ -53,10 +53,31 @@
 }
 ```
 
-- **`F-03`** `autoComplete` **必须是对象**（method/url/sendOn 都在内）；写 `true` + 外部 `source` 不触发联想
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:联想不触发`
+- **`F-03`** `autoComplete` 只认**对象**与**字符串 URL** 两种形态（`sendOn` 只能在对象形态里写）；`autoComplete: true` 只等价于「可搜索」，配外部 `source` 不触发联想
+  `来源:实战观察+V-19实测(2026-09-08)|状态:已实测|版本:6.13.0|后果:联想不触发——只在加载时请求一次，之后输入仅本地过滤`
+  实测四组（V-19-A，判据：输入 abc 后服务端是否出现 `term=abc` 请求）：
+
+  | 组 | 配置 | 联想请求 |
+  |---|---|---|
+  | A | `autoComplete: {method, url}` | ✅ 发 `term=abc` |
+  | B | `autoComplete: true` + 外部 `source` | ❌ 有搜索框，只本地过滤 |
+  | C | 只写 `source`（补 `searchable: true`） | ❌ 初始加载请求一次，之后本地过滤 |
+  | D | `autoComplete: "/api/xxx?term=${term}"` | ✅ 发 `term=abc` |
+
+  - 原「必须是对象」过严：**字符串 URL 与对象等效**（D 组实证）
+  - 无 `sendOn` 时页面**加载即发一次 `term=` 空请求**（`F-04` 可拦截）
 - **`F-04`** `sendOn` 写在 autoComplete 对象**内**（放 source 内失效）
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:联想不触发`
+  `来源:实战观察+V-19实测(2026-09-08)|状态:已实测|版本:6.13.0|后果:请求时机失控——每输入一个字符都发请求`
+  实测三组（V-19-B，条件统一为 `${term.length >= 3}`）：
+
+  | 组 | sendOn 位置 | 输入 1 字符 | 输入 3 字符 | 初始加载 |
+  |---|---|---|---|---|
+  | A | autoComplete 内 | 不发 | 发 | **不发** |
+  | B | source 内 | 发 | 发 | 发 |
+  | C | 不写（基线） | 发 | 发 | 发 |
+
+  - `sendOn` **同时管控初始加载请求**（A 组连 `term=` 空请求都被拦掉）
+  - **autoComplete 与 source 并存时，source 的 url 零请求**（B 组实证）：autoComplete 完全接管数据源，别再写一份 source 指望它兜底
 - **`F-07`** autoComplete 的 source 响应，`data` 可以是**直接数组** `[...]` 或**含 `options` 键的对象** `{options:[...]}`，两种都正常渲染（V-15 实测：数组与 `{options}` 各渲染 3 项）
   `来源:实战观察+V-15实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:把 CRUD 式对象（如 {rows,items}/{count,total}）当 data → amis 遍历对象的值当选项，显示 invalid label / 数字`
 - `${term}` 是 amis 默认搜索词变量（GET 为 query 参数）；`overlayStyle.width` 控制下拉面板宽度
@@ -64,8 +85,19 @@
 
 ## §4 编辑弹层展示字段
 
-- **`F-08`** 行上下文只读展示用 `static`（`"type":"static","name":"code","label":"Code","value":"${code}"`）；提交需要的主键用 `{ "type": "hidden", "name": "id" }`
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:提交缺主键 / 可编辑字段被误改`
+- **`F-08`** 行上下文只读展示用 `static`；提交需要的主键用 `{ "type": "hidden", "name": "id" }`
+  `来源:实战观察+V-19实测(2026-09-08)|状态:已实测|版本:6.13.0|后果:提交缺主键 / 可编辑字段被误改`
+  实测三组（V-19-D，crud 行编辑弹层，判据：展示文本 + POST 提交体）：
+
+  | 组 | 配置 | 展示 | 提交 body |
+  |---|---|---|---|
+  | A | `static`(名 `engineStatic` + `value:"${engine}"`) + `hidden id` | Trident - 001 | 含 `engineStatic` 与 `id` |
+  | B | `static` **不写 value**（name 与行字段同名 `engine`）+ `hidden id` | Trident - 001 | 含 `engine` 与 `id` |
+  | C | 只有 `input-text browser`（无 hidden，对照） | — | **仅 `browser`，无 id** |
+
+  - **`value:"${code}"` 非必需**：name 与行字段同名时自动从数据域取值（B 组），`value` 只在「字段名 ≠ 展示来源」时才写
+  - **提交体只含 form 内声明的字段**：不写 `hidden` 就拿不到行数据里的 `id` → `hidden` 必需
+  - **static 的值会随表单提交**（A/B 组 body 均含），后端 DTO 需能接收或可忽略
 
 ## §5 文件上传（Excel 导入）
 
@@ -97,16 +129,22 @@
   - **原「asBlob 与 dataType 必须成对」不准确**：`asBlob: true` 存在时 amis **自动**把含 File/Blob 的数据转成 multipart，`dataType: "form-data"` **可省**（B 组实证）
   - 建议仍保留 `dataType: "form-data"`（更明确，且未选文件时也保持 multipart），但非必需
 
-## §6 宽度控制（只认 columnRatio）
+## §6 宽度控制
 
-- **`F-06`** 控制表单项宽度用 `columnRatio`（form group 内的列宽比例，如 `"columnRatio": 2`；源码 `r.columnRatio || getWidthRate(r.columnClassName,!0)`）
-  `来源:实战观察+form源码(2026-09-02)|状态:据源码|版本:6.13.0|后果:宽度设置不生效`
+- **`F-06`** 单列表单（form 直接子项）调宽度用 **`inputClassName` 内置宽度类**或 **`style.width`**；`columnRatio` 只在 **`group` 内**生效（列宽比例，如 `"columnRatio": 2`；源码 `r.columnRatio || getWidthRate(r.columnClassName,!0)`）
+  `来源:实战观察+form源码(2026-09-02)+V-19实测(2026-09-08)|状态:已实测|版本:6.13.0|后果:宽度设置不生效（选错写法）`
+  实测三轮（V-19-C，判据：`getBoundingClientRect().width`，基线宽度 1230px）：
 
-| 尝试 | 结果 |
-|------|------|
-| `size: "xl"` | ❌ select 的 size 只控制样式不控宽度 |
-| `inputClassName: "w-xl"` | ❌ amis 6.13.0 无此内置 CSS 类 |
-| `style: { "width": "350px" }` | ❌ 作用在外层 div，不传到内部 input |
+  | 写法 | form 直接子项 | `group` 内 |
+  |---|---|---|
+  | `columnRatio: 1/2/6` | ❌ 无效（仍 1230，控件撑满） | ✅ 88 / 192 / 607（约 1:2:6） |
+  | `size: "xl"` | ❌ 无效（1230） | — |
+  | `inputClassName: "w-xl"` | ✅ **320px** | — |
+  | `style: { "width": "350px" }` | ✅ **350px**（内部 input 随之收缩为 328px） | — |
+
+  - **`size` 确实不控宽度**（select 与 input-text 均无变化）
+  - **推翻原「`w-xl` 无此内置类」**：amis 6.13.0 内置 `w-sm`/`w-lg`/`w-xl` 等宽度类（实测 150 / 280 / 320px），假类名对照组回到基线 1230 证明非巧合；类落在 `.cxd-Form-control`，内部 input 随之变窄
+  - **推翻原「style.width 不传到内部 input」**：style 作用在外层容器，但 input 实测随之收缩 → 视觉上控件整体变窄，写法有效
 
 ## §7 协作约束（需后端配合，前端无法独立完成）
 

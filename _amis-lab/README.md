@@ -72,6 +72,12 @@ copy schemas\v3-download-timing.json schema.json
 | `v17a-f05-upload.json` | V-17：F-05 上传 2×2 对照——`asBlob` / `dataType:"form-data"` 四种组合，判据为请求是否 multipart 且含 `filename=` |
 | `v18a-crud-c01-c05-c06-c07.json` | V-18-A/C/D：C-01 每页切换器 `perPageAvailable` 位置三对照；C-05 分页参数映射六组（含 `pageField` 替代方案、POST 对照、`foo=bar` 空映射对照）；C-06 `filterTogglable` 三对照；C-07 mapping `*` 兜底三对照 |
 | `v18b-c03-synclocation.json` | V-18-B：C-03 `syncLocation` 默认 vs 显式 `false`——翻页与带参 URL 打开时地址栏是否被污染 |
+| `v19a-f03-autocomplete.json` | V-19-A：F-03 autoComplete 四组——对象 / `true`+source / 仅 source(+searchable) / 字符串 URL，判据为输入后是否发 `term=abc` |
+| `v19b-f04-sendon.json` | V-19-B：F-04 sendOn 位置三组（autoComplete 内 / source 内 / 不写），判据为输入 1 字符与 3 字符时的请求 |
+| `v19c1-f06-select-width.json` | V-19-C 第 1 轮：F-06 select 五种宽度写法的实测宽度（基线 1230px） |
+| `v19c2-f06-group-inputtext.json` | V-19-C 第 2 轮：group 内 columnRatio 1/2/6 是否生效 + input-text 同五种写法 |
+| `v19c3-f06-cls-control.json` | V-19-C 第 3 轮：`inputClassName` 内置宽度类对照（w-xl / 假类名 / w-sm / w-lg） |
+| `v19d-f08-static-hidden.json` | V-19-D：F-08 编辑弹层三组（static 带 value / static 不带 value / 无 hidden 对照），判据为 POST 提交体字段 |
 | `v18c-c02-idname.json` | V-18-C：C-02 定位矩阵——3 个 crud（仅 id / 仅 name / id+name）× 4 种定位值 × 3 种载体（`componentId` / `target` / 顶层 `reload`），判据为各 crud 新增请求数 |
 
 > `schema.json` 里接口地址写相对路径 `/api/mock2/sample`，和 amis 文档站的写法一致，
