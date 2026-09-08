@@ -1,7 +1,7 @@
 ---
 name: amis-helper
 description: 百度 amis 低代码框架 JSON Schema 生成。用于手写后台管理页面配置——crud 列表页、弹层新增/编辑/删除、表单校验、字典下拉与远程联想、Excel 导入导出、接口响应适配、组件刷新联动。含高频坑点避坑规则与可复用骨架，产出可直接落地的 amis JSON。
-version: 1.2.9
+version: 1.2.10
 amis-version: "6.x（规则实测基于 6.13.0）"
 allowed-tools: Read, Grep, Glob
 ---
@@ -22,7 +22,7 @@ allowed-tools: Read, Grep, Glob
 | F-03 | autoComplete 用对象或字符串 URL（不能写 true） | references/form-controls.md §3 |
 | F-05 | 上传 input-file 必设 asBlob | references/form-controls.md §5 |
 | F-06 | 单列宽度用 inputClassName / style.width（columnRatio 限 group） | references/form-controls.md §6 |
-| A-02 | 非标准响应用 adaptor 转换 | references/data-source.md §2 |
+| A-02 | 非标准响应用 adaptor 转 status（防失败被当成功） | references/data-source.md §2 |
 
 ## 2. 场景 → 组件决策表
 
@@ -30,14 +30,14 @@ allowed-tools: Read, Grep, Glob
 |---------|--------|------|
 | 数据列表+搜索 | crud + filter | 独立搜索表单+target |
 | 新增/编辑/详情 | `actionType: "dialog"` + 内嵌 form | drawer（仅侧边长内容用） |
-| 危险操作确认 | 自定义 dialog 弹层（alert提示 + confirm按钮） | confirmText 浏览器原生框 |
+| 危险操作确认 | 自定义 dialog 弹层（alert提示 + confirm按钮） | confirmText（失败时弹层照关，不可重试） |
 | 状态列展示 | `type: "mapping"` + label 样式 | tpl 拼接 |
 | 行内多按钮 | operation 列 + `button-group` | 平铺多个按钮撑爆列宽 |
 | 导入 Excel | dialog + input-file(asBlob) + form-data | |
 | 导出/模板下载 | `actionType: "download"` | window.open / blob ajax |
 | 字典/枚举下拉 | select + source(带 adaptor) | 前端硬编码 options |
 | 远程联想输入 | select + autoComplete 对象 | input-text 手输 |
-| 弹层内选择数据 | dialog + crud(loadDataOnce) + bulkActions | |
+| 弹层内选择数据 | dialog + crud + bulkActions（提交按钮放 crud headerToolbar；跨页保留加 keepItemSelectionOnPageChange+syncLocation:false） | 弹层底部按钮取 selectedItems（读不到） |
 | 表格loading/按钮防重复 | 弹层提交靠内建 loading；导出/下载按钮用 Service 包层 + data 变量 + loadingOn | 弹层提交按钮配 loadingOn（死配置） |
 | 刷新其他组件 | 事件动作用 componentId reload（`D-03`）；按钮级刷新专用按钮用 target、业务按钮用顶层 reload（`D-12`）；close 缺省弹层 form api reload 生效（`D-11`）；close:false 弹层须在 submitSucc 里显式 componentId reload（`D-05`） | 弹层 form api 里写 reload 在 close:false 下不生效（实测） |
 

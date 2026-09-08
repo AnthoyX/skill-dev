@@ -1,0 +1,54 @@
+{
+  "type": "page",
+  "title": "V-20 A-02 adaptor",
+  "body": [
+    {
+      "type": "form",
+      "title": "A-02: A=select+adaptor B=select不写转换(对照)",
+      "body": [
+        {
+          "type": "select",
+          "name": "selA",
+          "label": "A-adaptor",
+          "placeholder": "A",
+          "source": {
+            "method": "get",
+            "url": "/api/lab/f20dict?nonstd=1",
+            "adaptor": "return { status: payload.code === 200 ? 0 : payload.code, data: payload.data };"
+          }
+        },
+        {
+          "type": "select",
+          "name": "selB",
+          "label": "B-no-adaptor",
+          "placeholder": "B",
+          "source": { "method": "get", "url": "/api/lab/f20dict?nonstd=1" }
+        }
+      ]
+    },
+    {
+      "type": "crud",
+      "id": "crudC",
+      "title": "C-crud+adaptor",
+      "api": {
+        "method": "get",
+        "url": "/api/lab/f20list?nonstd=1",
+        "adaptor": "return { status: 0, data: { items: payload.data, total: payload.data.length } };"
+      },
+      "columns": [
+        { "name": "label", "label": "Label" },
+        { "name": "value", "label": "Value" }
+      ]
+    },
+    {
+      "type": "crud",
+      "id": "crudD",
+      "title": "D-crud不写转换(对照)",
+      "api": { "method": "get", "url": "/api/lab/f20list?nonstd=1" },
+      "columns": [
+        { "name": "label", "label": "Label" },
+        { "name": "value", "label": "Value" }
+      ]
+    }
+  ]
+}

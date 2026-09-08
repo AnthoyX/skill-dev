@@ -1,0 +1,52 @@
+{
+  "type": "page",
+  "title": "V-20 D-10 keep selection",
+  "body": [
+    {
+      "type": "crud",
+      "id": "crudD",
+      "name": "crudD",
+      "title": "D: loadDataOnce + keepItemSelectionOnPageChange",
+      "selectable": true,
+      "loadDataOnce": true,
+      "keepItemSelectionOnPageChange": true,
+      "perPage": 5,
+      "api": "/api/lab/f20pickD",
+      "headerToolbar": [
+        { "type": "tpl", "tpl": "D-HEADER: len=${selectedItems.length}" },
+        {
+          "type": "button",
+          "label": "SubmitD",
+          "level": "primary",
+          "actionType": "ajax",
+          "disabledOn": "!${selectedItems.length}",
+          "api": {
+            "method": "post",
+            "url": "/api/lab/f20pickSaveD",
+            "data": { "ids": "${selectedItems|pick:id}" }
+          }
+        }
+      ],
+      "columns": [
+        { "name": "id", "label": "ID" },
+        { "name": "engine", "label": "Engine" }
+      ],
+      "bulkActions": [{ "type": "button", "label": "Batch Delete", "level": "danger" }]
+    },
+    {
+      "type": "crud",
+      "id": "crudE",
+      "name": "crudE",
+      "title": "E: only keepItemSelectionOnPageChange (no loadDataOnce)",
+      "selectable": true,
+      "keepItemSelectionOnPageChange": true,
+      "perPage": 5,
+      "api": "/api/lab/f20pickE",
+      "headerToolbar": [{ "type": "tpl", "tpl": "E-HEADER: len=${selectedItems.length}" }],
+      "columns": [
+        { "name": "id", "label": "ID" },
+        { "name": "engine", "label": "Engine" }
+      ]
+    }
+  ]
+}

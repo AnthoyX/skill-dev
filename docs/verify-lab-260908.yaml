@@ -98,3 +98,63 @@ results:
   - 'F-06 重写：columnRatio 限 group 内；size 无效；inputClassName/style.width 有效（推翻原表格两行）'
   - 'F-08 升已实测，补「value 非必需」与「static 值会提交」'
   - 'self-check.md §5 同步 F-03/F-04/F-06/F-08 措辞；pitfalls P-09/P-12/P-15/P-24 措辞同步'
+
+v20:
+  meta:
+    date: 2026-09-08
+    env: 同日续跑；mock 新增 `?nested=1`（data.records 字段名不被识别）与 `?errcode=1`（{code:500,msg} 无 status 的业务失败）
+    schemas:
+      A-02: v20a1-a02-adaptor-basic.json / v20a2-a02-nested-failcode.json / v20a3-a02-submit-failcode.json
+      D-07: v20b1-d07-confirmtext.json / v20b2-d07-fail-branch.json
+      D-10: v20c1-d10-picker.json / v20c2-d10-scope.json / v20c3-d10-keep-selection.json / v20c4-d10-keep-matrix.json / v20c5-d10-keep-matrix2.json
+  results:
+    - id: V-20-A
+      rule: A-02（非标准响应是否必须 adaptor）
+      verdict: '机制修正：必要性在「失败判定」，不在「数据渲染」——后者 amis 极宽容'
+      observed:
+        A: 'select + adaptor → 下拉 3 项'
+        B: 'select 不写 adaptor → 同样 3 项（无 status 字段不影响渲染）'
+        C: 'crud + adaptor → 3 行'
+        D: 'crud 不写 adaptor → 同样 3 行'
+        E: 'crud + data.records（字段名不被识别）不写 adaptor → **照样渲染 10 行**（amis 遍历 data 的值找数组）'
+        F: '同上 + adaptor 转 items → 10 行'
+        H: 'crud + 业务失败 {code:500,data:null} 不写 adaptor → 「暂无数据」，无错误提示'
+        I: '同上 + adaptor 转 status → 同样「暂无数据」（crud 加载失败本就静默）'
+        J: 'form 提交 {code:500,msg} 不写 adaptor → **submitSucc 触发（J_SUCC=Y）** + toast msg'
+        K: '同上 + adaptor 转 status=500 → **submitSucc 不触发（K_SUCC=UNSET）**'
+      conclusion:
+        - '**原「非标准响应不转换就渲染不出」不成立（过严）**：无 status 字段时 amis 视为成功并渲染（select 与 crud 均实测）；连 `data.records` 这类字段名都能渲染出来（与 F-07「遍历 data 的值」同构现象）'
+        - '**adaptor 的真正必要性是「失败判定」**：业务码失败（code=500 但无 status）不转换时 amis 走成功分支——submitSucc 误触发（弹层照关、后续动作照执行，用户以为成功）；转换后正确走失败分支'
+        - '字段/结构映射仍建议写 adaptor（行为更可控、不依赖 amis 的宽容兜底）'
+
+    - id: V-20-B
+      rule: D-07（确认操作用自定义 dialog，不用 confirmText）
+      verdict: '断言成立，但理由修正：不是「原生框」，而是「失败分支与关闭时机不可控」'
+      observed:
+        A: '覆盖 window.confirm 后**未被调用** → confirmText 弹的是 **amis 自有弹框**（标题「系统消息」+ 文本 + 取消/确认）；确认后请求正常发出、弹层自动关闭'
+        B: '自定义 dialog（close:false + submitSucc closeDialog）→ B_SUCC=Y 且弹层关闭'
+        C: '自定义 dialog 但 close:false 无 closeDialog（对照）→ C_SUCC=Y 但**弹层残留**'
+        A2: 'confirmText + 接口失败（status=1）→ 弹层**照样关闭**（dlgLeft=0）'
+        B2: '自定义 dialog + 接口失败 → B2_SUCC=UNSET，弹层**保持打开**可重试'
+      conclusion:
+        - '**confirmText 不是浏览器原生 confirm**（实测覆盖 window.confirm 未被调用），基础功能可用'
+        - '不用的真因是**失败分支不可控**：接口失败时 confirmText 弹层照样关闭（A2），无法重试、看不到失败态；自定义 dialog（close:false + submitSucc closeDialog）失败时保持打开（B2）'
+        - '「close:false 必须配 closeDialog」再次被实证（C 组弹层残留）'
+
+    - id: V-20-C
+      rule: D-10（弹层内选择器 loadDataOnce + bulkActions + selectedItems）
+      verdict: '机制修正：selectedItems 只在 crud 数据域内可见；跨页保留靠 keepItemSelectionOnPageChange + syncLocation:false，与 loadDataOnce 无关'
+      observed:
+        作用域: '弹层底部按钮的 `disabledOn: "!${selectedItems.length}"` 空选时 **disabled=false（未禁用）**；外层 form api 的 `${selectedItems|pick:id}` 提交体为 `{"ids":""}`'
+        探针: '同一弹层内 tpl 对比 → `FORM-LEVEL: len=`（空）vs `HEADER-LEVEL: len=2` → selectedItems 只在 crud 数据域内'
+        D组内提交: '提交按钮放进 crud headerToolbar → body=`{"ids":[1,2]}`（正常取到）'
+        跨页矩阵: '勾选 2 行 → 翻到第 2 页 → 回第 1 页：D(keep=true,sync默认,loadDataOnce) 丢 / H(keep=true,sync默认,无loadDataOnce) 丢 / F(keep=true,sync=false,loadDataOnce) **保留** / G(keep=true,sync=false,无loadDataOnce) **保留** / I(不写keep,sync=false) 丢'
+      conclusion:
+        - '**`selectedItems` 只在 crud 数据域内可见**（与 `A-01`「crud 内变量不向外传播」同构）：提交按钮与取字段必须写在 crud 内（headerToolbar / bulkActions），弹层底部按钮与外层 form api 都读不到'
+        - '**跨页保留选中 = `keepItemSelectionOnPageChange: true` 且 `syncLocation: false`**：任一不满足都会丢（syncLocation 默认为 true 会写 URL，实测导致选中清空）'
+        - '**`loadDataOnce` 与选中保留无关**（F vs G、D vs H 双对照）：原断言把「跨页保留」归因于 loadDataOnce 不准确；loadDataOnce 只决定是否一次拉全量'
+  回流:
+  - 'A-02 升已实测并重写（必要性=失败判定；数据渲染有宽容兜底）'
+  - 'D-07 升已实测并修正理由（非原生框，而是失败分支不可控；附注 close:false 必须配 closeDialog）'
+  - 'D-10 升已实测并修正机制（selectedItems 作用域；跨页保留双条件；loadDataOnce 无关）'
+  - 'self-check §1/§3 措辞同步；META 已实测 27→30'

@@ -1,0 +1,41 @@
+{
+  "type": "page",
+  "title": "V-20 D-10 keep selection 2",
+  "body": [
+    {
+      "type": "crud",
+      "id": "crudF",
+      "name": "crudF",
+      "title": "F: syncLocation false + loadDataOnce + keepItemSelection",
+      "selectable": true,
+      "syncLocation": false,
+      "loadDataOnce": true,
+      "keepItemSelectionOnPageChange": true,
+      "perPage": 5,
+      "api": "/api/lab/f20pickF",
+      "headerToolbar": [{ "type": "tpl", "tpl": "F-HEADER: len=${selectedItems.length}" }],
+      "columns": [
+        { "name": "id", "label": "ID" },
+        { "name": "engine", "label": "Engine" }
+      ],
+      "bulkActions": [{ "type": "button", "label": "Batch Delete", "level": "danger" }]
+    },
+    {
+      "type": "crud",
+      "id": "crudG",
+      "name": "crudG",
+      "title": "G: syncLocation false + keepItemSelection (no loadDataOnce)",
+      "selectable": true,
+      "syncLocation": false,
+      "keepItemSelectionOnPageChange": true,
+      "perPage": 5,
+      "api": "/api/lab/f20pickG",
+      "headerToolbar": [{ "type": "tpl", "tpl": "G-HEADER: len=${selectedItems.length}" }],
+      "columns": [
+        { "name": "id", "label": "ID" },
+        { "name": "engine", "label": "Engine" }
+      ],
+      "bulkActions": [{ "type": "button", "label": "Batch Delete", "level": "danger" }]
+    }
+  ]
+}

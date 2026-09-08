@@ -92,3 +92,9 @@
 
 ### P-27 动作里配了 `then` 但后续动作不执行
 - 实测（V-16，2026-09-07）：`then` 作为动作的兄弟字段在 amis 6.13.0 **恒不触发**，与 `responseType` 无关（普通 JSON 的 ajax 对照组同样不触发）；后续动作必须写进 `onEvent.click.actions` 数组顺序执行 → 见 references/dialog-actions.md §2（`D-02`）
+
+### P-28 后端返回业务失败码，前端却当成功（弹层照关 / 提示成功）
+- 实测（V-20，2026-09-08）：响应只有 `code:500` 没有 `status` 时，amis 视为成功——`submitSucc` 照触发（实测 `J_SUCC=Y`），只是另外 toast 了 `msg`；用 `adaptor` 把 `code` 转成 `status` 后才正确走失败分支 → 见 references/data-source.md §2（`A-02`）
+
+### P-29 弹层内选择器提交体为空 / 空选也能提交 / 翻页后选中丢失
+- 实测（V-20，2026-09-08）：① `selectedItems` 只在 crud 数据域内可见——弹层底部按钮的 `disabledOn: "!${selectedItems.length}"` 不禁用、外层 form api 的 `${selectedItems|pick:id}` 提交成 `{"ids":""}`，提交按钮要放进 crud 的 headerToolbar；② 跨页保留选中须同时配 `keepItemSelectionOnPageChange: true` 与 `syncLocation: false`（`syncLocation` 默认 true 会让保留失效，`loadDataOnce` 无关） → 见 references/dialog-actions.md §5（`D-10`）

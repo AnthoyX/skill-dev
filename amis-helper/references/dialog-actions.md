@@ -42,7 +42,11 @@
   `来源:实战观察+V-13-A实测(2026-09-03)|状态:已实测|版本:6.13.0|后果:接口不调用、submitSucc 不触发、弹层不关闭（点了没反应）`
   注：源码中事件动作须显式 `preventDefault:true` 才阻止默认行为，但 form 的 submit 事件属于例外——以实测为准
 - **`D-07`** 确认弹层用 `actionType:"dialog"` 自定义弹框，不用 `confirmText`
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:原生框无法 loading、无法展示复杂提示`
+  `来源:实战观察+V-20实测(2026-09-08)|状态:已实测|版本:6.13.0|后果:失败分支不可控——接口失败时弹层照样关闭，看不到失败态也无法重试`
+  实测（V-20）：
+  - `confirmText` **不是浏览器原生 `confirm`**（覆盖 `window.confirm` 后未被调用），弹的是 amis 自有确认框（标题「系统消息」+ 文本 + 取消/确认），确认后请求正常发出
+  - 真因是**失败分支不可控**：接口 `status=1` 时 confirmText 弹层**照样关闭**；自定义 dialog（`close:false` + `submitSucc` closeDialog）失败时**保持打开**可重试
+  - 附带实证：`close:false` 但 `submitSucc` 里漏写 `closeDialog` → 提交成功后**弹层残留**（`D-01` 的配对要求再次被验证）
 - **`D-11`** 弹层默认关闭模式（close 缺省）下 form api 的 `reload`（值为 crud 的 `name`）生效，提交后自动刷新 CRUD；可用 `"reload": "none"` 显式关闭
   `来源:官方文档(crud「增」章节)+V-12实测(2026-09-01)|状态:已实测|版本:6.13.0|后果:close 缺省模式下不写 reload 则不刷新；与 D-05（close:false 下不生效）形成对偶边界`
 
@@ -105,6 +109,19 @@
 
 完整可落地配置 → examples/bulk-actions-picker.json。要点：
 
-- **`D-10`** 选择一批数据回填用 dialog/drawer + crud(`loadDataOnce:true`) + `bulkActions`；`${selectedItems|pick:字段}` 提取字段数组、`${selectedItems.length}` 显示选中数、`disabledOn: "!${selectedItems.length}"` 未选中禁用
-  `来源:实战观察|状态:实战观察|版本:6.x|后果:提交格式错 / 空选可提交`
+- **`D-10`** 选择一批数据回填用 dialog/drawer + crud(`loadDataOnce:true`) + `bulkActions`；取选中值的按钮**必须写在 crud 内**（headerToolbar / bulkActions）：`${selectedItems|pick:字段}` 提取字段数组、`${selectedItems.length}` 显示选中数、`disabledOn: "!${selectedItems.length}"` 未选中禁用；需跨页保留选中时再加 `keepItemSelectionOnPageChange: true` 且 `syncLocation: false`
+  `来源:实战观察+V-20实测(2026-09-08)|状态:已实测|版本:6.13.0|后果:提交体为空 / 空选可提交 / 翻页后选中丢失`
+  实测（V-20）：
+  - **`selectedItems` 只在 crud 数据域内可见**（与 `A-01` 同构）：弹层底部按钮的 `disabledOn` 空选时**不禁用**、外层 form api 的 `${selectedItems|pick:id}` 提交体为 `{"ids":""}`；同一弹层内 tpl 对比 → crud 外层读到空、crud headerToolbar 读到 `len=2`。把提交按钮放进 crud headerToolbar 后 body 正常为 `{"ids":[1,2]}`
+  - **跨页保留选中 = `keepItemSelectionOnPageChange: true` 且 `syncLocation: false`**（勾选 2 行 → 翻第 2 页 → 回第 1 页）：
+
+    | 组 | keepItemSelectionOnPageChange | syncLocation | loadDataOnce | 结果 |
+    |---|---|---|---|---|
+    | D | true | 默认(true) | true | 丢 |
+    | H | true | 默认(true) | false | 丢 |
+    | F | true | false | true | **保留** |
+    | G | true | false | false | **保留** |
+    | I | 不写 | false | false | 丢 |
+
+  - **`loadDataOnce` 与选中保留无关**（F vs G、D vs H 双对照）：它只决定是否一次拉全量；原「靠 loadDataOnce 保留选中」的说法不准确
 - 长内容侧滑用 `drawer`，普通用 `dialog`

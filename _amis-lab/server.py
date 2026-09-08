@@ -174,6 +174,18 @@ class Handler(BaseHTTPRequestHandler):
                 'msg': 'ok',
                 'data': OPTIONS,
             }
+        elif q.get('nested', ['0'])[0] == '1':
+            # 字段名完全不被 amis 识别的嵌套响应：data.records / data.total
+            # （模拟「字段名不匹配」——这才是必须写 adaptor 的场景）
+            payload = {
+                'code': 200,
+                'msg': 'ok',
+                'data': {'records': ROWS, 'total': len(ROWS)},
+            }
+        elif q.get('errcode', ['0'])[0] == '1':
+            # 业务失败但没有 status 字段：{code:500,msg:'boom',data:null}
+            # 用于验证「不写 adaptor 时 amis 是否把后端失败当成功」
+            payload = {'code': 500, 'msg': 'boom: backend exploded', 'data': None}
         elif wrap == 'array':
             # amis 标准 status，data 直接是数组（F-07 的「合法」形态）
             payload = {

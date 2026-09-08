@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 1.2.10（2026-09-08）
+
+V-20 实测收尾 3 条（详见 `docs/verify-lab-260908.yaml` §v20），`A-02/D-07/D-10` 全部由「据源码 / 实战观察」升「已实测」（27→30 条），**三条全部修正机制或理由**：
+
+- **`A-02` 机制修正**：原「非标准响应不转换就渲染不出」**不成立（过严）**——实测无 `status` 字段时 amis 视为成功并渲染：select `{code:200,data:[...]}` 不写 adaptor 照样 3 项；crud `data.records`（字段名完全不被识别）照样渲染 10 行（amis 会遍历 `data` 的值找数组）。**真正的必要性在「失败判定」**：提交返 `{code:500,msg}` 不转换时 **`submitSucc` 照触发**（J 组 `J_SUCC=Y`，后端失败被当成功 → 弹层照关、后续动作照执行）；转换后正确走失败分支（K 组 `K_SUCC=UNSET`）
+- **`D-07` 理由修正**：`confirmText` **不是浏览器原生 `confirm`**（覆盖 `window.confirm` 后未被调用），弹的是 amis 自有确认框（标题「系统消息」+ 文本 + 取消/确认），基础功能可用。不用的真因是**失败分支不可控**：接口 `status=1` 时 confirmText 弹层**照样关闭**（A2），而自定义 dialog（`close:false` + `submitSucc` closeDialog）失败时保持打开可重试（B2）；附带实证漏写 `closeDialog` 会导致提交成功后**弹层残留**（C 组）
+- **`D-10` 机制修正**：① **`selectedItems` 只在 crud 数据域内可见**（与 `A-01` 同构）——弹层底部按钮的 `disabledOn` 空选时**不禁用**、外层 form api 的 `${selectedItems|pick:id}` 提交体为 `{"ids":""}`；把提交按钮放进 crud headerToolbar 后 body 正常为 `{"ids":[1,2]}`。② **跨页保留选中 = `keepItemSelectionOnPageChange: true` 且 `syncLocation: false`**（2×2 矩阵：keep+sync默认→丢；keep+sync:false→保留；不写 keep→丢）。③ **`loadDataOnce` 与选中保留无关**（F vs G、D vs H 双对照），原归因不准确
+- 新增排障 `P-28`（后端业务失败被当成功）、`P-29`（弹层内选择器提交体为空 / 空选可提交）；`self-check.md` §1/§3 三条措辞同步；`META.md` 已实测 27→30，「据源码」级别清空
+- 排障 27→29；归档 `_amis-lab/schemas/v20a1~v20c5`（10 个）+ README 归档表；lab mock 新增 `?nested=1`（data.records）与 `?errcode=1`（业务失败无 status）
+- 剩余未实测 3 条：`F-09`（后端协作约束，建议降级为约定类规则）/ `C-08` / `R-01`（规范建议，不排实测）
+
 ## 1.2.9（2026-09-08）
 
 V-19 实测表单域 4 条（详见 `docs/verify-lab-260908.yaml`），`F-03/F-04/F-06/F-08` 全部升「已实测」（23→27 条），其中 **2 条推翻原断言、1 条大幅修正**：

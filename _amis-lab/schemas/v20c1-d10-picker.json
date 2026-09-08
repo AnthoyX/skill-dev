@@ -1,0 +1,113 @@
+{
+  "type": "page",
+  "title": "V-20 D-10 picker",
+  "body": {
+    "type": "form",
+    "title": "D-10",
+    "body": [
+      {
+        "type": "button",
+        "label": "PickA",
+        "actionType": "dialog",
+        "dialog": {
+          "title": "A: loadDataOnce true",
+          "size": "lg",
+          "actions": [
+            { "type": "button", "label": "Cancel", "actionType": "close" },
+            {
+              "type": "button",
+              "label": "Submit",
+              "level": "primary",
+              "actionType": "submit",
+              "close": false,
+              "disabledOn": "!${selectedItems.length}"
+            }
+          ],
+          "body": {
+            "type": "form",
+            "api": {
+              "method": "post",
+              "url": "/api/lab/f20pickSaveA",
+              "data": { "ids": "${selectedItems|pick:id}" }
+            },
+            "onEvent": {
+              "submitSucc": {
+                "actions": [
+                  { "actionType": "custom", "script": "window.A_SAVE = 'Y';" },
+                  { "actionType": "closeDialog" }
+                ]
+              }
+            },
+            "body": [
+              {
+                "type": "crud",
+                "id": "pickCrudA",
+                "name": "pickCrudA",
+                "selectable": true,
+                "loadDataOnce": true,
+                "perPage": 5,
+                "api": "/api/lab/f20pickA",
+                "columns": [
+                  { "name": "id", "label": "ID" },
+                  { "name": "engine", "label": "Engine" }
+                ],
+                "bulkActions": [{ "type": "button", "label": "Batch Delete", "level": "danger" }]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "button",
+        "label": "PickB",
+        "actionType": "dialog",
+        "dialog": {
+          "title": "B: no loadDataOnce (control)",
+          "size": "lg",
+          "actions": [
+            { "type": "button", "label": "Cancel", "actionType": "close" },
+            {
+              "type": "button",
+              "label": "Submit",
+              "level": "primary",
+              "actionType": "submit",
+              "close": false,
+              "disabledOn": "!${selectedItems.length}"
+            }
+          ],
+          "body": {
+            "type": "form",
+            "api": {
+              "method": "post",
+              "url": "/api/lab/f20pickSaveB",
+              "data": { "ids": "${selectedItems|pick:id}" }
+            },
+            "onEvent": {
+              "submitSucc": {
+                "actions": [
+                  { "actionType": "custom", "script": "window.B_SAVE = 'Y';" },
+                  { "actionType": "closeDialog" }
+                ]
+              }
+            },
+            "body": [
+              {
+                "type": "crud",
+                "id": "pickCrudB",
+                "name": "pickCrudB",
+                "selectable": true,
+                "perPage": 5,
+                "api": "/api/lab/f20pickB",
+                "columns": [
+                  { "name": "id", "label": "ID" },
+                  { "name": "engine", "label": "Engine" }
+                ],
+                "bulkActions": [{ "type": "button", "label": "Batch Delete", "level": "danger" }]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

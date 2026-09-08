@@ -1,0 +1,69 @@
+{
+  "type": "page",
+  "title": "V-20 D-07 confirmText vs dialog",
+  "body": [
+    {
+      "type": "form",
+      "title": "D-07",
+      "body": [
+        {
+          "type": "button",
+          "label": "DelA",
+          "level": "danger",
+          "actionType": "ajax",
+          "confirmText": "Delete this record?",
+          "api": { "method": "post", "url": "/api/lab/f20delA" }
+        },
+        {
+          "type": "button",
+          "label": "DelB",
+          "level": "danger",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "B: standard custom dialog",
+            "actions": [
+              { "type": "button", "label": "Cancel", "actionType": "close" },
+              { "type": "button", "label": "Confirm", "level": "danger", "actionType": "submit", "close": false }
+            ],
+            "body": {
+              "type": "form",
+              "onEvent": {
+                "submitSucc": {
+                  "actions": [
+                    { "actionType": "custom", "script": "window.B_SUCC = 'Y';" },
+                    { "actionType": "closeDialog" }
+                  ]
+                }
+              },
+              "api": { "method": "post", "url": "/api/lab/f20delB" },
+              "body": [{ "type": "alert", "body": "Delete this record?", "level": "warning" }]
+            }
+          }
+        },
+        {
+          "type": "button",
+          "label": "DelC",
+          "level": "danger",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "C: close:false but no closeDialog",
+            "actions": [
+              { "type": "button", "label": "Cancel", "actionType": "close" },
+              { "type": "button", "label": "Confirm", "level": "danger", "actionType": "submit", "close": false }
+            ],
+            "body": {
+              "type": "form",
+              "onEvent": {
+                "submitSucc": {
+                  "actions": [{ "actionType": "custom", "script": "window.C_SUCC = 'Y';" }]
+                }
+              },
+              "api": { "method": "post", "url": "/api/lab/f20delC" },
+              "body": [{ "type": "alert", "body": "Delete this record?", "level": "warning" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -11,6 +11,8 @@
     "body": {
       "type": "crud",
       "loadDataOnce": true,
+      "keepItemSelectionOnPageChange": true,
+      "selectable": true,
       "api": {
         "method": "get",
         "url": "/XXX/XXXX/item/list",
